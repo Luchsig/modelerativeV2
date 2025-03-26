@@ -31,6 +31,7 @@
     "convex": "^1.21.0",
     "convex-helpers": "^0.1.76",
     "date-fns": "^4.1.0",
+    "dotenv": "^16.4.7",
     "framer-motion": "11.15.0",
     "lucide-react": "^0.483.0",
     "query-strings": "^0.1.0",

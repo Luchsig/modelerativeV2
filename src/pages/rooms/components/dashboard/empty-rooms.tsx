@@ -1,4 +1,4 @@
-import { useApiMutation } from "../../../../../hooks/use-api-mutation.ts";
+import { useApiMutation } from "@/hooks/use-api-mutation.ts";
 
 ("useClient");
 

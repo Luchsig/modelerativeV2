@@ -10,7 +10,7 @@ import { Link2, Pencil, Trash2 } from "lucide-react";
 import { addToast } from "@heroui/toast";
 import { useState } from "react";
 
-import { useApiMutation } from "../../hooks/use-api-mutation.ts";
+import { useApiMutation } from "@/hooks/use-api-mutation.ts";
 import { api } from "../../convex/_generated/api";
 
 import { ConfirmationDialog } from "@/components/modal/confirmation-dialog.tsx";

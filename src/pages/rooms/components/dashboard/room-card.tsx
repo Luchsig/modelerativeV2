@@ -10,7 +10,7 @@ import { MoreHorizontal, Star } from "lucide-react";
 import { cn } from "@heroui/theme";
 import { addToast } from "@heroui/toast";
 
-import { useApiMutation } from "../../../../../hooks/use-api-mutation.ts";
+import { useApiMutation } from "@/hooks/use-api-mutation.ts";
 import { api } from "../../../../../convex/_generated/api";
 
 import { Action } from "@/components/actions.tsx";
@@ -113,7 +113,7 @@ export const RoomCard = ({
           <Button
             isIconOnly
             className={cn(
-              "opacity-0 group-hover:opacity-100 transition-opacity absolute top-1 right-3 text-foreground-600 bg-transparent hover:text-purple-800",
+              "opacity-0 group-hover:opacity-100 transition-opacity absolute top-1 right-3 text-foreground-600 bg-transparent hover:text-purple-800 dark:hover:text-pink-300",
               disabled && "cursor-not-allowed opacity-75",
             )}
             disabled={onPendingFavorite || onPendingUnfavorite}

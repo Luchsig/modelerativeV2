@@ -1,10 +1,10 @@
-import {Link} from "@heroui/link";
-import {button as buttonStyles} from "@heroui/theme";
+import { Link } from "@heroui/link";
+import { button as buttonStyles } from "@heroui/theme";
+import { GithubIcon } from "lucide-react";
 
-import {siteConfig} from "@/config/site";
-import {subtitle, title} from "@/components/primitives";
+import { siteConfig } from "@/config/site";
+import { subtitle, title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
-import {GithubIcon} from "lucide-react";
 
 export default function IndexPage() {
   return (
@@ -14,11 +14,9 @@ export default function IndexPage() {
           <span className={title()}>Make&nbsp;</span>
           <span className={title({ color: "violet" })}>professional&nbsp;</span>
           <br />
-          <span className={title()}>
-            diagrams.
-          </span>
+          <span className={title()}>diagrams.</span>
           <div className={subtitle({ class: "mt-4" })}>
-            Expandable and customizable modeling tool for your team's needs.
+            Expandable and customizable modeling tool for your team&#39;s needs.
           </div>
         </div>
 

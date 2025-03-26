@@ -15,6 +15,8 @@ const images = [
   "/placeholder/Placeholder_10.png",
 ];
 
+const maxRoomsPerOrganization = Number(process.env.MAX_ROOMS_PER_ORGANIZATION) || 10;
+
 export const create = mutation({
   args: {
     organizationId: v.string(),
@@ -27,17 +29,28 @@ export const create = mutation({
       throw new Error("Unauthorized");
     }
 
+    const roomsCount = await ctx.db
+      .query("rooms")
+      .withIndex("by_organizationId", (q) =>
+        q.eq("organizationId", args.organizationId),
+      )
+      .collect();
+
+    if (roomsCount.length >= maxRoomsPerOrganization) {
+      throw new Error(
+        "You have reached the maximum number of rooms for this organization!",
+      );
+    }
+
     const randImg = images[Math.floor(Math.random() * images.length)];
 
-    const room = await ctx.db.insert("rooms", {
+    return await ctx.db.insert("rooms", {
       title: args.title,
       organizationId: args.organizationId,
       authorId: identity.subject,
       authorName: identity.name!,
       imageUrl: randImg,
     });
-
-    return room;
   },
 });
 
@@ -54,11 +67,14 @@ export const remove = mutation({
 
     const userId = identity.subject;
 
-    const existingFavorite =
-        await ctx.db.query("userFavorites").withIndex("by_user_room",
-            (q) => q.eq("userId", userId).eq("roomId", args.id)).unique();
+    const existingFavorite = await ctx.db
+      .query("userFavorites")
+      .withIndex("by_user_room", (q) =>
+        q.eq("userId", userId).eq("roomId", args.id),
+      )
+      .unique();
 
-    if(existingFavorite){
+    if (existingFavorite) {
       await ctx.db.delete(existingFavorite._id);
     }
 

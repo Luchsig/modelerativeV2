@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import { getAllOrThrow } from "convex-helpers/server/relationships";
 
 import { query } from "./_generated/server";
-import roomList from "@/pages/rooms/components/dashboard/room-list.tsx";
 
 export const get = query({
   args: {

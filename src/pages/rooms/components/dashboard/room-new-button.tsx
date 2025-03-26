@@ -5,7 +5,8 @@ import { Plus } from "lucide-react";
 import { addToast } from "@heroui/toast";
 
 import { api } from "../../../../../convex/_generated/api";
-import { useApiMutation } from "../../../../../hooks/use-api-mutation.ts";
+
+import { useApiMutation } from "@/hooks/use-api-mutation.ts";
 
 interface RoomNewButtonProps {
   organizationId: string;
@@ -17,26 +18,28 @@ export const RoomNewButton = ({
   disabled = false,
 }: RoomNewButtonProps) => {
   const { mutate, pending } = useApiMutation(api.room.create);
-
   const onClick = () => {
     mutate({ organizationId, title: "Untitled" })
-      .then((id) => {
+      .then(() => {
         addToast({
           title: "Successfully Created New Room",
           description: "saving changes...",
           variant: "bordered",
           color: "success",
         });
-        // TODO: redirect to board/{id}
       })
-      .catch(() =>
+      .catch((error) => {
+        // Extrahiere die eigentliche Fehlermeldung
+        const errorMessage =
+          error?.message?.split("Error: ")[1].split("!")[0] || "An unexpected error occurred";
+
         addToast({
           title: "Something went wrong",
-          description: "please try again later...",
+          description: errorMessage,
           variant: "bordered",
           color: "warning",
-        }),
-      );
+        });
+      });
   };
 
   return (

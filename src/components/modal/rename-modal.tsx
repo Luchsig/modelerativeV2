@@ -13,9 +13,9 @@ import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { addToast } from "@heroui/toast";
 
-import { useApiMutation } from "../../../hooks/use-api-mutation.ts";
 import { api } from "../../../convex/_generated/api";
 
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useRenameModal } from "@/store/use-rename-modal";
 
 export const RenameModal = () => {
@@ -73,7 +73,7 @@ export const RenameModal = () => {
                 <Button color="danger" variant="light" onPress={onClose}>
                   Cancel
                 </Button>
-                <Button color="secondary" type="submit" disabled={pending}>
+                <Button color="secondary" disabled={pending} type="submit">
                   Save
                 </Button>
               </ModalFooter>
