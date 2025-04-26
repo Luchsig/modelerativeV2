@@ -4,11 +4,8 @@ import { OrganizationsConfigurator } from "@/pages/rooms/components/organization
 import { Navbar } from "@/pages/rooms/components/navbar.tsx";
 import Dashboard from "@/pages/rooms/components/dashboard.tsx";
 
-interface RoomsPageProps {
-  children: React.ReactNode;
-}
 
-export default function RoomsPage({ children }: RoomsPageProps) {
+export default function RoomsPage() {
   return (
     <section>
       <Background />
@@ -19,7 +16,6 @@ export default function RoomsPage({ children }: RoomsPageProps) {
           <div className="h-full flex-auto">
             <Navbar />
             <Dashboard />
-            {children}
           </div>
         </div>
       </div>

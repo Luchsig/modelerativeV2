@@ -2,14 +2,14 @@ import { create } from "zustand";
 
 const defaultValues = { id: "", title: "" };
 
-interface IRenameModal {
+interface IRoomEditModal {
   isOpen: boolean;
   initialValues: typeof defaultValues;
   onOpen: (id: string, title: string) => void;
   onClose: () => void;
 }
 
-export const useRenameModal = create<IRenameModal>((set) => ({
+export const useRoomEditModal = create<IRoomEditModal>((set) => ({
   isOpen: false,
   initialValues: defaultValues,
   onOpen: (id, title) => {

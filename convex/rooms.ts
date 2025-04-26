@@ -22,7 +22,7 @@ export const get = query({
         .withIndex("by_user_organization", (q) =>
           q
             .eq("userId", identity.subject)
-            .eq("organizationId", args.organizationId),
+            .eq("organizationId", args.organizationId)
         )
         .order("desc")
         .collect();

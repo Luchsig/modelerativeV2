@@ -4,7 +4,7 @@ import IndexPage from "@/pages/index";
 import DocsPage from "@/pages/docs";
 import AboutPage from "@/pages/about";
 import RoomsPage from "@/pages/rooms/rooms.tsx";
-import Canvas from "@/pages/canvas/canvas.tsx";
+import {CanvasPage} from "@/pages/canvas/canvas-page.tsx";
 
 function App() {
   return (
@@ -13,7 +13,7 @@ function App() {
       <Route element={<DocsPage />} path="/docs" />
       <Route element={<AboutPage />} path="/about" />
       <Route element={<RoomsPage />} path="/rooms" />
-      <Route element={<Canvas />} path="/rooms/:id" />
+      <Route element={<CanvasPage />} path="/rooms/:roomId" />
     </Routes>
   );
 }

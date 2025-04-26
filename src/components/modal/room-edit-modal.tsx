@@ -3,7 +3,6 @@
 import {
   Form,
   Modal,
-  ModalBody,
   ModalContent,
   ModalFooter,
   ModalHeader,
@@ -16,10 +15,10 @@ import { addToast } from "@heroui/toast";
 import { api } from "../../../convex/_generated/api";
 
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { useRenameModal } from "@/store/use-rename-modal";
+import { useRoomEditModal } from "@/store/use-room-edit-modal.ts";
 
-export const RenameModal = () => {
-  const { isOpen, onClose, initialValues } = useRenameModal();
+export const RoomEditModal = () => {
+  const { isOpen, onClose, initialValues } = useRoomEditModal();
   const [title, setTitle] = useState(initialValues.title);
 
   const { mutate, pending } = useApiMutation(api.room.update);
@@ -32,7 +31,7 @@ export const RenameModal = () => {
     })
       .then(() => {
         addToast({
-          title: "Title changed to " + title,
+          title: "Saved changes in room " + title,
           variant: "bordered",
           color: "success",
         });
@@ -57,11 +56,10 @@ export const RenameModal = () => {
       <ModalContent>
         {(onClose) => (
           <>
-            <ModalHeader>Edit Room Title</ModalHeader>
-            <ModalBody>Enter a new title for the room</ModalBody>
-            <Form onSubmit={onSubmit}>
+            <ModalHeader>Edit room name</ModalHeader>
+            <Form className={"pl-6 pr-6 space-y-2"} onSubmit={onSubmit}>
+              <p>Enter a new title for the room</p>
               <Input
-                className={"pl-5 pr-5"}
                 disabled={pending}
                 maxLength={60}
                 placeholder="Room Title"

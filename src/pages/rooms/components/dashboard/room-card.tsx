@@ -13,7 +13,7 @@ import { addToast } from "@heroui/toast";
 import { useApiMutation } from "@/hooks/use-api-mutation.ts";
 import { api } from "../../../../../convex/_generated/api";
 
-import { Action } from "@/components/actions.tsx";
+import { Actions } from "@/components/actions.tsx";
 
 interface RoomCardProps {
   key: string;
@@ -28,7 +28,6 @@ interface RoomCardProps {
 }
 
 export const RoomCard = ({
-  key,
   authorId,
   authorName,
   createdAt,
@@ -86,7 +85,7 @@ export const RoomCard = ({
             src={imageUrl}
           />
         </div>
-        <Action id={id} placement={"right"} title={title}>
+        <Actions id={id} placement={"right"} title={title}>
           <Button
             isIconOnly
             className={
@@ -102,7 +101,7 @@ export const RoomCard = ({
               }
             />
           </Button>
-        </Action>
+        </Actions>
         <CardFooter className="items-start bg-purple-300/80 dark:bg-purple-800/80 border-white/20 overflow-hidden py-1 absolute left-0 bottom-0 w-full z-10 flex flex-col">
           <p className="text-tiny text-foreground truncate max-w-[calc(100%-20px)] flex-1 pt-1">
             {title}

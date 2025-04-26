@@ -8,10 +8,12 @@ import { useOrganization } from "@clerk/clerk-react";
 import { addToast } from "@heroui/toast";
 
 import { api } from "../../../../../convex/_generated/api";
+import {useRoomCreationModal} from "@/store/use-room-creation-modal.ts";
 
 const EmptyRooms = () => {
   const { mutate, pending } = useApiMutation(api.room.create);
   const { organization } = useOrganization();
+  const { onOpen } = useRoomCreationModal();
 
   const onPress = () => {
     if (!organization) return;
@@ -21,13 +23,13 @@ const EmptyRooms = () => {
       title: "Untitled",
     })
       .then((id) => {
+        onOpen(id, "Untitled");
         addToast({
           title: "Successfully Created New Room",
           description: "saving changes...",
           variant: "bordered",
           color: "success",
         });
-        // TODO: redirect to board/{id}
       })
       .catch(() =>
         addToast({

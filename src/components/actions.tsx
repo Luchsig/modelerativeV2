@@ -10,11 +10,11 @@ import { Link2, Pencil, Trash2 } from "lucide-react";
 import { addToast } from "@heroui/toast";
 import { useState } from "react";
 
-import { useApiMutation } from "@/hooks/use-api-mutation.ts";
 import { api } from "../../convex/_generated/api";
 
+import { useApiMutation } from "@/hooks/use-api-mutation.ts";
 import { ConfirmationDialog } from "@/components/modal/confirmation-dialog.tsx";
-import {useRenameModal} from "@/store/use-rename-modal.ts";
+import { useRoomEditModal } from "@/store/use-room-edit-modal.ts";
 
 interface ActionProps {
   id: string;
@@ -23,9 +23,9 @@ interface ActionProps {
   children: React.ReactNode;
 }
 
-export const Action = ({ children, placement, id, title }: ActionProps) => {
+export const Actions = ({ children, placement, id, title }: ActionProps) => {
   const { mutate } = useApiMutation(api.room.remove);
-  const { onOpen } = useRenameModal();
+  const { onOpen } = useRoomEditModal();
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -80,14 +80,14 @@ export const Action = ({ children, placement, id, title }: ActionProps) => {
             Copy Room Link
           </DropdownItem>
           <DropdownItem
-            key="renameRoom"
+            key="editRoom"
             className={"flex flex-row"}
             startContent={<Pencil className={"h-4 w-4 mr-2"} />}
             onPress={() => {
               onOpen(id, title);
             }}
           >
-            Rename room
+            Edit room
           </DropdownItem>
           <DropdownItem
             key="deleteRoom"
@@ -95,7 +95,7 @@ export const Action = ({ children, placement, id, title }: ActionProps) => {
             startContent={<Trash2 className="h-4 w-4 mr-2" />}
             onPress={() => setIsOpen(true)}
           >
-            Delete
+            Delete room
           </DropdownItem>
         </DropdownMenu>
       </Dropdown>

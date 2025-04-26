@@ -7,6 +7,7 @@ import { addToast } from "@heroui/toast";
 import { api } from "../../../../../convex/_generated/api";
 
 import { useApiMutation } from "@/hooks/use-api-mutation.ts";
+import {useRoomCreationModal} from "@/store/use-room-creation-modal.ts";
 
 interface RoomNewButtonProps {
   organizationId: string;
@@ -18,9 +19,12 @@ export const RoomNewButton = ({
   disabled = false,
 }: RoomNewButtonProps) => {
   const { mutate, pending } = useApiMutation(api.room.create);
+  const { onOpen } = useRoomCreationModal();
+
   const onClick = () => {
     mutate({ organizationId, title: "Untitled" })
-      .then(() => {
+      .then((room) => {
+        onOpen(room, "Untitled");
         addToast({
           title: "Successfully Created New Room",
           description: "saving changes...",

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {memo, useEffect, useState} from "react";
 
-import { RenameModal } from "@/components/modal/rename-modal.tsx";
+import { RoomEditModal } from "@/components/modal/room-edit-modal.tsx";
+import {RoomCreationModal} from "@/components/modal/room-creation-modal.tsx";
 
-export const ModalProvider = () => {
+export const ModalProvider = memo(() => {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -17,7 +18,10 @@ export const ModalProvider = () => {
 
   return (
     <>
-      <RenameModal />
+      <RoomEditModal />
+      <RoomCreationModal />
     </>
   );
-};
+});
+
+ModalProvider.displayName = "ModalProvider";

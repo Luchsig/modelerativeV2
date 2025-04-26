@@ -1,0 +1,54 @@
+services:
+  ourfiles-frontend:
+    build:
+      context: .
+      args:
+        - VITE_CONVEX_URL=http://${HOST_IP:-127.0.0.1}:${PORT:-3210}
+        - VITE_CONVEX_DASHBOARD_URL=http://${HOST_IP:-127.0.0.1}:${DASHBOARD_PORT:-6791}
+    restart: always
+    ports:
+      - "5173:80"
+    environment:
+      - VITE_CONVEX_URL=http://${HOST_IP:-127.0.0.1}:${PORT:-3210}
+      - VITE_CONVEX_DASHBOARD_URL=http://${HOST_IP:-127.0.0.1}:${DASHBOARD_PORT:-6791}
+
+  ourfiles-backend:
+    build:
+      context: .
+      dockerfile: ./self-hosted/Dockerfile
+    restart: always
+    ports:
+      - "${PORT:-3210}:3210"
+      - "${SITE_PROXY_PORT:-3211}:3211"
+    volumes:
+      - data:/convex/data
+      - ./convex:/convex/convex
+
+    environment:
+      - INSTANCE_NAME=${INSTANCE_NAME:-}
+      - INSTANCE_SECRET=${INSTANCE_SECRET:-}
+      - CONVEX_RELEASE_VERSION_DEV=${CONVEX_RELEASE_VERSION_DEV:-}
+      - ACTIONS_USER_TIMEOUT_SECS=${ACTIONS_USER_TIMEOUT_SECS:-}
+      - CONVEX_CLOUD_ORIGIN=${URL_BASE:-http://${HOST_IP:-127.0.0.1}}:${PORT:-3210}
+      - CONVEX_SITE_ORIGIN=${URL_BASE:-http://${HOST_IP:-127.0.0.1}}:${SITE_PROXY_PORT:-3211}
+      - DATABASE_URL=${DATABASE_URL:-}
+      - DISABLE_BEACON=${DISABLE_BEACON:-}
+      - REDACT_LOGS_TO_CLIENT=${REDACT_LOGS_TO_CLIENT:-false}
+    healthcheck:
+      test: curl -f http://localhost:3210/version
+      interval: 5s
+      start_period: 5s
+
+  ourfiles-dashboard:
+    image: ghcr.io/get-convex/convex-dashboard:latest
+    restart: always
+    ports:
+      - "${DASHBOARD_PORT:-6791}:6791"
+    environment:
+      - NEXT_PUBLIC_DEPLOYMENT_URL=http://${HOST_IP:-127.0.0.1}:${PORT:-3210}
+    depends_on:
+      ourfiles-backend:
+        condition: service_healthy
+
+volumes:
+  data:

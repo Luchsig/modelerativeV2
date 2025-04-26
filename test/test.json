@@ -1,0 +1,96 @@
+{
+  "shapes": [
+    {
+      "id": 1,
+      "shape": "circle",
+      "size": { "radius": 65 },
+      "color": "blue",
+      "typeName": "Circle",
+      "typeDescription": "A simple blue circle",
+      "connectableTypes": [1,2],
+      "isTextEnabled": true
+    },
+    {
+      "id": 2,
+      "shape": "rectangle",
+      "size": { "width": 150, "height": 80 },
+      "color": "red",
+      "typeName": "Rectangle",
+      "typeDescription": "A simple red rectangle",
+      "connectableTypes": [1,2],
+      "isTextEnabled": false
+    },
+    {
+      "id": 3,
+      "shape": "rectangle",
+      "imageProps": {
+        "src": "test1.svg",
+        "width": 40,
+        "height": 40,
+        "imagePosition": "TL"
+      },
+      "size": {
+        "width": 150,
+        "height": 80
+      },
+      "color": "lightgrey",
+      "typeName": "Custom TL Shape",
+      "typeDescription": "A custom shape with an image",
+      "isTextEnabled": true,
+      "connectableTypes": [1,2]
+    },
+    {
+      "id": 4,
+      "shape": "rectangle",
+      "imageProps": {
+        "src": "test2.svg",
+        "width": 40,
+        "height": 40,
+        "imagePosition": "TR"
+      },
+      "size": {
+        "width": 150,
+        "height": 80
+      },
+      "color": "lightgrey",
+      "typeName": "Custom TR Shape",
+      "typeDescription": "A custom shape with an image",
+      "isTextEnabled": false,
+      "connectableTypes": [1,2]
+    },
+    {
+      "id": 5,
+      "shape": "rectangle",
+      "imageProps": {
+        "src": "test3.svg",
+        "width": 40,
+        "height": 40,
+        "imagePosition": "BL"
+      },
+      "size": {
+        "width": 150,
+        "height": 80
+      },
+      "color": "lightgrey",
+      "typeName": "Custom BL Shape",
+      "typeDescription": "A custom shape with an image",
+      "isTextEnabled": true,
+      "connectableTypes": [1,2]
+    },
+    {
+      "id": 6,
+      "shape": "custom",
+      "imageProps": {
+        "src": "test_big_shape.png"
+      },
+      "size": {
+        "width": 150,
+        "height": 80
+      },
+      "typeName": "Custom BL Shape 2",
+      "typeDescription": "A custom shape with an image",
+      "isTextEnabled": true,
+      "connectableTypes": [1,2]
+    }
+  ]
+}
