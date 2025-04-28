@@ -45,7 +45,9 @@ const Canvas: React.FC = () => {
     marquee,
     selectedIds,
     handlers: marqueeHandlers,
-  } = useMarqueeSelection(nodes, stageRef);
+  } = useMarqueeSelection(nodes, stageRef, (singleId) =>
+    setSelected({ type: "node", id: singleId }),
+  );
 
   // ── Edge-Drag Hook: übergebe nodes, addEdge und stageRef
   const { previewEdge, startDrag } = useEdgeDrag(nodes, addEdge, stageRef);

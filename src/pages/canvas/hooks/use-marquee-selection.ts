@@ -13,6 +13,7 @@ interface Marquee {
 export function useMarqueeSelection(
   nodes: ShapeData[],
   stageRef: React.RefObject<Konva.Stage>,
+  onSingleSelect?: (id: string) => void,
 ) {
   const [marquee, setMarquee] = useState<Marquee | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -31,7 +32,7 @@ export function useMarqueeSelection(
         const rect = { x: pos.x, y: pos.y, width: 0, height: 0 };
 
         marqueeRef.current = rect;
-        setSelectedIds([]); // alte Auswahl löschen
+        setSelectedIds([]);
         setMarquee(rect);
       }
     },
@@ -92,7 +93,13 @@ export function useMarqueeSelection(
       })
       .map((n) => n.id);
 
-    setSelectedIds(hits);
+    if (hits.length > 1) {
+      setSelectedIds(hits);
+    } else if (hits.length === 1) {
+      onSingleSelect?.(hits[0]);
+    } else {
+      setSelectedIds([]);
+    }
     setMarquee(null);
     marqueeRef.current = null;
   }, [nodes]);
