@@ -1,3 +1,5 @@
+// src/store/use-room-store.ts
+
 import { create } from "zustand";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
@@ -11,7 +13,7 @@ import {
   RoomImage,
 } from "@/types/canvas";
 
-interface RoomStore {
+export interface RoomStore {
   roomData: RoomData | null;
   roomImages: RoomImage[];
   setRoomData: (room: RoomData, roomImages: RoomImage[]) => void;
@@ -28,11 +30,12 @@ interface RoomStore {
   setEdges: (edges: Edge[]) => void;
 
   updateNode: (id: string, shapeData: Partial<SchemaShape>) => void;
+  removeNode: (id: string) => void;
 
+  /** Fügt eine Kante hinzu, wenn zwischen from/to noch keine existiert */
   addEdge: (edge: Edge) => void;
   removeEdge: (id: string) => void;
-
-  removeNode: (id: string) => void;
+  updateEdge: (id: string, edge: Partial<Edge>) => void;
 
   undo: () => void;
   redo: () => void;
@@ -95,7 +98,7 @@ export const useRoomStore = create<RoomStore>((set, get) => {
 
       if (index !== -1) {
         ydoc.transact(() => {
-          const original = yNodes.get(index);
+          const original = yNodes.get(index)!;
           const updated = {
             ...original,
             shape: {
@@ -112,12 +115,10 @@ export const useRoomStore = create<RoomStore>((set, get) => {
 
     removeNode: (id) => {
       ydoc.transact(() => {
-        const remainingNodes = yNodes
-          .toArray()
-          .filter((node) => node.id !== id);
+        const remainingNodes = yNodes.toArray().filter((n) => n.id !== id);
         const remainingEdges = yEdges
           .toArray()
-          .filter((edge) => edge.from !== id && edge.to !== id);
+          .filter((e) => e.from !== id && e.to !== id);
 
         yNodes.delete(0, yNodes.length);
         yNodes.push(remainingNodes);
@@ -128,55 +129,62 @@ export const useRoomStore = create<RoomStore>((set, get) => {
     },
 
     addEdge: (edge) => {
-      yEdges.push([edge]);
+      // Prüfen, ob bereits eine Kante zwischen from und to existiert (egal ob Richtung)
+      const exists = get().edges.some(
+        (e) =>
+          (e.from === edge.from && e.to === edge.to) ||
+          (e.from === edge.to && e.to === edge.from),
+      );
+
+      if (!exists) {
+        yEdges.push([edge]);
+      }
     },
 
     removeEdge: (id) => {
       ydoc.transact(() => {
-        const remainingEdges = yEdges
-          .toArray()
-          .filter((edge) => edge.id !== id);
+        const remainingEdges = yEdges.toArray().filter((e) => e.id !== id);
 
         yEdges.delete(0, yEdges.length);
         yEdges.push(remainingEdges);
       });
     },
 
+    updateEdge: (id, partialEdge) => {
+      const index = yEdges.toArray().findIndex((e) => e.id === id);
+
+      if (index !== -1) {
+        ydoc.transact(() => {
+          const original = yEdges.get(index)!;
+          const updated: Edge = { ...original, ...partialEdge };
+
+          yEdges.delete(index);
+          yEdges.insert(index, [updated]);
+        });
+      }
+    },
+
     undo: () => undoManager.undo(),
     redo: () => undoManager.redo(),
 
     initYjsSync: async (roomId, initialState) => {
-      const ydoc = get().ydoc;
-      const yNodes = get().yNodes;
-      const yEdges = get().yEdges;
-
       const provider = new WebsocketProvider(
         "ws://localhost:1234",
         roomId,
         ydoc,
       );
-
       let initialized = false;
 
-      provider.on("sync", (isSynced: boolean) => {
+      provider.on("sync", (isSynced) => {
         if (!isSynced || initialized) return;
-
         initialized = true;
-
-        const isEmpty = yNodes.length === 0 && yEdges.length === 0;
-
-        if (isEmpty && initialState) {
+        if (yNodes.length === 0 && yEdges.length === 0 && initialState) {
           ydoc.transact(() => {
-            if (initialState.nodes?.length) {
-              yNodes.push(initialState.nodes);
-            }
-            if (initialState.edges?.length) {
-              yEdges.push(initialState.edges);
-            }
+            if (initialState.nodes) yNodes.push(initialState.nodes);
+            if (initialState.edges) yEdges.push(initialState.edges);
           });
         }
       });
-
       provider.on("status", ({ status }) => {
         console.log(`🧠 Yjs Provider status: ${status}`);
       });

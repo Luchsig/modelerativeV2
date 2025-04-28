@@ -1,6 +1,15 @@
-// src/pages/layout/components/layout/resizable-template.tsx
+// src/pages/canvas/components/nodes/resizable-template.tsx
 
-import { FC, Fragment, memo, useEffect, useRef, useState } from "react";
+import {
+  FC,
+  memo,
+  useRef,
+  useMemo,
+  useCallback,
+  useLayoutEffect,
+  useEffect,
+  useState,
+} from "react";
 import {
   Group,
   Rect,
@@ -10,22 +19,26 @@ import {
   Image as KonvaImage,
 } from "react-konva";
 import useImage from "use-image";
-import { Html } from "react-konva-utils";
-import { Textarea } from "@heroui/input";
-import { Plus } from "lucide-react";
+import Konva from "konva";
 
-import { Position, ShapeTemplateProps, ShapeType } from "@/types/canvas.ts";
-import { useRoomStore } from "@/store/use-room-store.ts";
+import {
+  Position,
+  ShapeTemplateProps,
+  ShapeType,
+  AnchorName,
+} from "@/types/canvas";
+import { useRoomStore } from "@/store/use-room-store";
+import Anchors from "@/pages/canvas/components/nodes/anchors";
 
-type AnchorName = "top" | "right" | "bottom" | "left";
+const MIN_SIZE = 20;
+const ANCHOR_SIZE = 12;
 
 interface Props extends ShapeTemplateProps {
+  isMultiSelected?: boolean;
+  onDragStart?: (e: Konva.KonvaEventObject<DragEvent>) => void;
+  onDragMove?: (e: Konva.KonvaEventObject<DragEvent>) => void;
+  onDragEnd?: (e: Konva.KonvaEventObject<DragEvent>) => void;
   onAnchorMouseDown?: (
-    shapeId: string,
-    anchor: AnchorName,
-    absolutePos: Position,
-  ) => void;
-  onAnchorMouseUp?: (
     shapeId: string,
     anchor: AnchorName,
     absolutePos: Position,
@@ -35,108 +48,125 @@ interface Props extends ShapeTemplateProps {
 const ResizableTemplate: FC<Props> = ({
   shapeData,
   isSelected,
+  isMultiSelected,
   onSelect,
   onChange,
   onAnchorMouseDown,
-  onAnchorMouseUp,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
 }) => {
-  const { shape, position } = shapeData;
-  const {
-    size,
-    color,
-    imageProps,
-    isTextEnabled,
-    text: initialText = "",
-  } = shape;
-
-  // Room images
-  const roomImages = useRoomStore((s) => s.roomImages);
-  const imageUrl =
-    imageProps?.src && roomImages.length
-      ? (roomImages.find((ri) => ri.name === imageProps.src)?.url ?? "")
-      : (imageProps?.src ?? "");
-  const [img] = useImage(imageUrl);
-
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [text, setText] = useState(initialText);
   const [hoveredAnchor, setHoveredAnchor] = useState<AnchorName | null>(null);
+  const { shape, position } = shapeData;
+  const { size, color, imageProps, isTextEnabled, text = "" } = shape;
 
-  useEffect(() => {
-    setText(initialText);
-  }, [initialText]);
+  const roomImages = useRoomStore((s) => s.roomImages);
+  const imageUrl = useMemo(() => {
+    if (!imageProps?.src) return "";
+    const found = roomImages.find((ri) => ri.name === imageProps.src);
 
-  const groupRef = useRef<Konva.Group>(null);
-  const trRef = useRef<Konva.Transformer>(null);
+    return found ? found.url : imageProps.src;
+  }, [imageProps?.src, roomImages]);
+  const [img] = useImage(imageUrl || "");
 
-  const MIN_SIZE = 20;
-  const ANCHOR_SIZE = 12;
+  // … w, h, localAnchors, textBox, imagePos wie gehabt …
+  const { w, h, localAnchors, textBox, imagePos } = useMemo(() => {
+    // Breite/Höhe
+    const w =
+      shape.shape === ShapeType.Circle
+        ? 2 * (size.radius ?? 25)
+        : (size.width ?? 50);
+    const h =
+      shape.shape === ShapeType.Circle
+        ? 2 * (size.radius ?? 25)
+        : (size.height ?? 50);
 
-  // Dimensions
-  const w =
-    shape.shape === ShapeType.Circle
-      ? 2 * (size.radius ?? 25)
-      : (size.width ?? 50);
-  const h =
-    shape.shape === ShapeType.Circle
-      ? 2 * (size.radius ?? 25)
-      : (size.height ?? 50);
-
-  // Local anchors
-  const localAnchors: { name: AnchorName; x: number; y: number }[] =
-    shape.shape === ShapeType.Circle
-      ? (() => {
-          const r = size.radius ?? 25;
-
-          return [
-            { name: "top", x: 0, y: -r },
-            { name: "right", x: r, y: 0 },
-            { name: "bottom", x: 0, y: r },
-            { name: "left", x: -r, y: 0 },
+    // Anker-Positionen
+    const localAnchors =
+      shape.shape === ShapeType.Circle
+        ? [
+            { name: AnchorName.Top, x: 0, y: -(size.radius ?? 25) },
+            { name: AnchorName.Right, x: size.radius ?? 25, y: 0 },
+            { name: AnchorName.Bottom, x: 0, y: size.radius ?? 25 },
+            { name: AnchorName.Left, x: -(size.radius ?? 25), y: 0 },
+          ]
+        : [
+            { name: AnchorName.Top, x: w / 2, y: 0 },
+            { name: AnchorName.Right, x: w, y: h / 2 },
+            { name: AnchorName.Bottom, x: w / 2, y: h },
+            { name: AnchorName.Left, x: 0, y: h / 2 },
           ];
-        })()
-      : [
-          { name: "top", x: w / 2, y: 0 },
-          { name: "right", x: w, y: h / 2 },
-          { name: "bottom", x: w / 2, y: h },
-          { name: "left", x: 0, y: h / 2 },
-        ];
 
-  // Icon pos
-  const getImagePos = () => {
+    // Text‐Box
+    const textBox =
+      shape.shape === ShapeType.Circle
+        ? {
+            x: -(size.radius ?? 25),
+            y: -(size.radius ?? 25),
+            width: 2 * (size.radius ?? 25),
+            height: 2 * (size.radius ?? 25),
+          }
+        : { x: 5, y: 5, width: w - 10, height: h - 10 };
+
+    // Image‐Pos
     const pad = 4;
     const iw = imageProps?.width ?? 30;
     const ih = imageProps?.height ?? 30;
+    const positions = {
+      TL: { x: pad, y: pad },
+      TR: { x: w - iw - pad, y: pad },
+      BL: { x: pad, y: h - ih - pad },
+      BR: { x: w - iw - pad, y: h - ih - pad },
+    } as const;
+    const imagePos = positions[imageProps?.imagePosition || "TL"];
 
-    switch (imageProps?.imagePosition) {
-      case "TR":
-        return { x: w - iw - pad, y: pad };
-      case "BR":
-        return { x: w - iw - pad, y: h - ih - pad };
-      case "BL":
-        return { x: pad, y: h - ih - pad };
-      default:
-        return { x: pad, y: pad };
+    return { w, h, localAnchors, textBox, imagePos };
+  }, [
+    shape.shape,
+    size.radius,
+    size.width,
+    size.height,
+    imageProps?.width,
+    imageProps?.height,
+    imageProps?.imagePosition,
+  ]);
+
+  const groupRef = useRef<Konva.Group>(null);
+  const trRef = useRef<Konva.Transformer>(null);
+  const rafRef = useRef<number>();
+
+  // Intern: kontinuierliches Drag‐Update
+  // Intern: Drag–End
+  const handleInternalDragEnd = useCallback(() => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
     }
-  };
-
-  // Handlers
-  const handleDragMove = () => {
     const g = groupRef.current!;
 
     onChange?.({ ...shapeData, position: { x: g.x(), y: g.y() } });
-  };
-  const handleDragEnd = () => {
-    const g = groupRef.current!;
+  }, [onChange, shapeData]);
 
-    onChange?.({ ...shapeData, position: { x: g.x(), y: g.y() } });
-  };
-  const handleTransformEnd = () => {
+  // Intern: Drag–Move
+  const handleInternalDragMove = useCallback(() => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+    rafRef.current = requestAnimationFrame(() => {
+      const g = groupRef.current!;
+
+      onChange?.({ ...shapeData, position: { x: g.x(), y: g.y() } });
+    });
+  }, [onChange, shapeData]);
+
+  // Transform End (Resize)
+  const handleTransformEnd = useCallback(() => {
     const g = groupRef.current!;
-    const scaleX = g.scaleX();
-    const scaleY = g.scaleY();
+    const scaleX = g.scaleX(),
+      scaleY = g.scaleY();
 
     g.scaleX(1);
     g.scaleY(1);
+
     const newSize =
       shape.shape === ShapeType.Circle
         ? {
@@ -155,43 +185,56 @@ const ResizableTemplate: FC<Props> = ({
       position: { x: g.x(), y: g.y() },
       shape: { ...shape, size: newSize },
     });
-  };
+  }, [onChange, shapeData, shape, size.radius, size.width, size.height]);
 
-  useEffect(() => {
+  // Transformer an Group binden
+  useLayoutEffect(() => {
     if (isSelected && trRef.current && groupRef.current) {
       trRef.current.nodes([groupRef.current]);
       trRef.current.getLayer()?.batchDraw();
     }
   }, [isSelected, w, h]);
 
-  // Text box calculation
-  const textBox =
-    shape.shape === ShapeType.Circle
-      ? {
-          x: -(size.radius ?? 25),
-          y: -(size.radius ?? 25),
-          width: 2 * (size.radius ?? 25),
-          height: 2 * (size.radius ?? 25),
-        }
-      : {
-          x: 5,
-          y: 5,
-          width: w - 10,
-          height: h - 10,
-        };
+  // Cleanup
+  useEffect(
+    () => () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    },
+    [],
+  );
 
   return (
     <>
       <Group
         ref={groupRef}
         draggable
+        id={shapeData.id}
         x={position.x}
         y={position.y}
-        onClick={onSelect}
-        onDblClick={() => setIsRenaming(true)}
-        onDragEnd={handleDragEnd}
-        onDragMove={handleDragMove}
-        onTap={onSelect}
+        onClick={() => onSelect?.()}
+        onDragEnd={(e) => {
+          if (!isMultiSelected) {
+            handleInternalDragEnd();
+            onDragEnd?.(e);
+          } else {
+            onDragEnd?.(e);
+          }
+        }}
+        onDragMove={(e) => {
+          if (!isMultiSelected) {
+            handleInternalDragMove();
+            onDragMove?.(e);
+          } else {
+            onDragMove?.(e);
+          }
+        }}
+        onDragStart={(e) => {
+          if (!isMultiSelected) {
+            onSelect?.();
+            onDragStart?.(e);
+          }
+        }}
+        onTap={() => onSelect?.()}
       >
         {/* Shape */}
         {shape.shape === ShapeType.Rectangle && (
@@ -205,115 +248,58 @@ const ResizableTemplate: FC<Props> = ({
         )}
 
         {/* Optional Icon */}
-        {img && imageProps?.imagePosition && (
-          <KonvaImage
-            height={imageProps.height}
-            image={img}
-            width={imageProps.width}
-            x={getImagePos().x}
-            y={getImagePos().y}
+        {img &&
+          imageProps?.imagePosition &&
+          shape.shape !== ShapeType.Custom && (
+            <KonvaImage
+              height={imageProps.height}
+              image={img}
+              width={imageProps.width}
+              x={imagePos.x}
+              y={imagePos.y}
+            />
+          )}
+
+        {/* Text */}
+        {isTextEnabled && (
+          <Text
+            {...textBox}
+            align="center"
+            text={text}
+            verticalAlign="middle"
           />
         )}
 
-        {/* Text or Textarea */}
-        {isTextEnabled &&
-          (!isRenaming ? (
-            <Text
-              align="center"
-              text={text}
-              verticalAlign="middle"
-              {...textBox}
-            />
-          ) : (
-            <Html
-              divProps={{
-                style: { background: "#fff", border: "1px solid #aaa" },
-              }}
-              groupProps={textBox}
-            >
-              <Textarea
-                value={text}
-                onBlur={() => {
-                  setIsRenaming(false);
-                  onChange?.({ ...shapeData, shape: { ...shape, text } });
-                }}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    setIsRenaming(false);
-                    onChange?.({ ...shapeData, shape: { ...shape, text } });
-                  }
-                }}
-              />
-            </Html>
-          ))}
-
         {/* Anchors */}
-        {isSelected &&
-          localAnchors.map((a) => {
-            const lx = a.x - ANCHOR_SIZE / 2;
-            const ly = a.y - ANCHOR_SIZE / 2;
-            const abs = { x: position.x + a.x, y: position.y + a.y };
-            const isHover = hoveredAnchor === a.name;
-
-            return (
-              <Fragment key={a.name}>
-                <Rect
-                  cornerRadius={2}
-                  fill="green"
-                  height={ANCHOR_SIZE}
-                  opacity={isHover ? 1 : 0.3}
-                  width={ANCHOR_SIZE}
-                  x={lx}
-                  y={ly}
-                  onMouseDown={(e) => {
-                    e.cancelBubble = true;
-                    onAnchorMouseDown?.(shapeData.id, a.name, abs);
-                  }}
-                  onMouseEnter={() => setHoveredAnchor(a.name)}
-                  onMouseLeave={() => setHoveredAnchor(null)}
-                  onMouseUp={(e) => {
-                    e.cancelBubble = true;
-                    onAnchorMouseUp?.(shapeData.id, a.name, abs);
-                  }}
-                />
-                <Html
-                  divProps={{
-                    style: {
-                      width: `${ANCHOR_SIZE}px`,
-                      height: `${ANCHOR_SIZE}px`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      pointerEvents: "none",
-                    },
-                  }}
-                  groupProps={{
-                    x: lx,
-                    y: ly,
-                    width: ANCHOR_SIZE,
-                    height: ANCHOR_SIZE,
-                  }}
-                >
-                  <Plus color="white" size={ANCHOR_SIZE * 0.8} />
-                </Html>
-              </Fragment>
-            );
-          })}
+        {isSelected && !isMultiSelected && (
+          <Anchors
+            anchors={localAnchors}
+            hovered={hoveredAnchor}
+            offset={position}
+            size={ANCHOR_SIZE}
+            onMouseDown={(name, abs) =>
+              onAnchorMouseDown?.(shapeData.id, name, abs)
+            }
+            onMouseEnter={(name) => setHoveredAnchor(name)}
+            onMouseLeave={() => setHoveredAnchor(null)}
+          />
+        )}
       </Group>
 
-      {isSelected && (
+      {/* Resize‐Transformer */}
+      {isSelected && !isMultiSelected && (
         <Transformer
           ref={trRef}
-          boundBoxFunc={(oldB, newB) =>
-            newB.width < MIN_SIZE || newB.height < MIN_SIZE ? oldB : newB
+          boundBoxFunc={(oldBox, newBox) =>
+            newBox.width < MIN_SIZE || newBox.height < MIN_SIZE
+              ? oldBox
+              : newBox
           }
           enabledAnchors={[
             "top-left",
             "top-right",
-            "bottom-right",
             "bottom-left",
+            "bottom-right",
           ]}
           rotateEnabled={false}
           onTransformEnd={handleTransformEnd}

@@ -1,6 +1,6 @@
 // types/layout.ts
 
-import {Id} from "../../convex/_generated/dataModel";
+import { Id } from "../../convex/_generated/dataModel";
 
 export interface ImageProps {
   src: string;
@@ -46,10 +46,18 @@ export interface ShapeTemplateProps {
   onChange?: (newAttrs: ShapeData) => void;
 }
 
+export enum AnchorName {
+  Top = "top",
+  Right = "right",
+  Bottom = "bottom",
+  Left = "left",
+}
+
 export interface Edge {
   id: string;
-  from: string; // Node ID
-  to: string; // Node ID
+  from: string;
+  to: string;
+  text?: string;
 }
 
 export interface RoomData {
