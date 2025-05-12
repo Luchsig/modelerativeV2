@@ -1,11 +1,11 @@
 services:
   - type: web
     name: yjs-server
-    env: docker
     plan: free
     dockerfilePath: ./server/Dockerfile
     envVars:
       - key: PORT
-        value: 1234
+        value: 80
       - key: HOST
         value: 0.0.0.0
+    runtime: docker
