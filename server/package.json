@@ -1,0 +1,7 @@
+{
+  "name": "yjs-server",
+  "version": "1.0.0",
+  "dependencies": {
+    "y-websocket": "^2.1.0"
+  }
+}
