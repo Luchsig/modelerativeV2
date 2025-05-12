@@ -54,6 +54,7 @@ export const create = mutation({
       stateNodes: "",
       stateEdges: "",
       components: "",
+      stateVersion: 0,
     });
   },
 });
@@ -231,6 +232,7 @@ export const updateStates = mutation({
     id: v.id("rooms"),
     stateNodes: v.string(),
     stateEdges: v.string(),
+    clientVersion: v.number(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -239,10 +241,20 @@ export const updateStates = mutation({
       throw new Error("Unauthorized");
     }
 
+    const room = await ctx.db.get(args.id);
+
+    if (!room) {
+      throw new Error("Room not found");
+    }
+
+    if ((room.stateVersion ?? 0) !== args.clientVersion) {
+      throw new Error("Version mismatch");
+    }
+
     return await ctx.db.patch(args.id, {
       stateNodes: args.stateNodes,
       stateEdges: args.stateEdges,
+      stateVersion: (room.stateVersion ?? 0) + 1,
     });
   },
 });
-

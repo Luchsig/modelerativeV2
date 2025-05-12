@@ -92,7 +92,7 @@ export const MultipleImageUpload = () => {
                     );
 
                     if (uploaded) {
-                      removeFile({ ids: [uploaded._id] });
+                      removeFile({ ids: [uploaded.id] });
                     }
                     removeLocalImage(index);
                   }}

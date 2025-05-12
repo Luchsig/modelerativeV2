@@ -11,6 +11,7 @@ export default defineSchema({
     stateNodes: v.string(),
     stateEdges: v.string(),
     components: v.string(),
+    stateVersion: v.number(),
   })
     .index("by_organizationId", ["organizationId"])
     .searchIndex("search_title", {

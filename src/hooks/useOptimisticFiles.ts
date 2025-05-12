@@ -21,6 +21,7 @@ export function useOptimisticCreateImage(roomId: Id<"rooms">) {
         }),
       );
 
+      //@ts-ignore
       localStore.setQuery(api.images.list, { roomId }, [
         ...existingImages,
         ...optimisticImages,
@@ -30,19 +31,15 @@ export function useOptimisticCreateImage(roomId: Id<"rooms">) {
 }
 
 export function useOptimisticRemoveFile(roomId: Id<"rooms">) {
-  return useMutation(api.images.remove).withOptimisticUpdate(
-    (localStore, args) => {
-      const existingImages = localStore.getQuery(api.images.list, { roomId });
+  return useMutation(api.images.remove).withOptimisticUpdate((localStore) => {
+    const existingImages = localStore.getQuery(api.images.list, { roomId });
 
-      if (existingImages === undefined) return;
+    if (existingImages === undefined) return;
 
-      const updatedImages = existingImages.filter(
-        (image) => !args.ids.includes(image._id),
-      );
+    const updatedImages = existingImages.filter((image) => image.id);
 
-      localStore.setQuery(api.images.list, { roomId }, updatedImages);
-    },
-  );
+    localStore.setQuery(api.images.list, { roomId }, updatedImages);
+  });
 }
 
 export function useImages(roomId: Id<"rooms">) {

@@ -9,8 +9,9 @@ import {
   ShapeData,
   Edge,
   RoomData,
-  SchemaShape,
   RoomImage,
+  Position,
+  SchemaShape,
 } from "@/types/canvas";
 
 export interface RoomStore {
@@ -18,56 +19,79 @@ export interface RoomStore {
   roomImages: RoomImage[];
   setRoomData: (room: RoomData, roomImages: RoomImage[]) => void;
 
+  setVersion: (version: number) => void;
+
   ydoc: Y.Doc;
-  yNodes: Y.Array<ShapeData>;
-  yEdges: Y.Array<Edge>;
+  yNodes: Y.Map<ShapeData>;
+  yEdges: Y.Map<Edge>;
   undoManager: Y.UndoManager;
 
   nodes: ShapeData[];
   edges: Edge[];
 
-  setNodes: (nodes: ShapeData[]) => void;
-  setEdges: (edges: Edge[]) => void;
-
-  updateNode: (id: string, shapeData: Partial<SchemaShape>) => void;
+  addNode: (node: ShapeData) => void;
+  moveNodes: (positions: { id: string; position: Position }[]) => void;
+  updateNode: (
+    id: string,
+    shapeData: { position?: Position; shape?: Partial<SchemaShape> },
+  ) => void;
   removeNode: (id: string) => void;
 
-  /** Fügt eine Kante hinzu, wenn zwischen from/to noch keine existiert */
   addEdge: (edge: Edge) => void;
-  removeEdge: (id: string) => void;
   updateEdge: (id: string, edge: Partial<Edge>) => void;
+  removeEdge: (id: string) => void;
 
   undo: () => void;
   redo: () => void;
 
   initYjsSync: (
     roomId: Id<"rooms">,
-    initialState?: {
-      nodes?: ShapeData[];
-      edges?: Edge[];
-    },
-  ) => Promise<void>;
+    initialState?: { nodes?: ShapeData[]; edges?: Edge[] },
+  ) => Promise<() => void>;
 }
 
 export const useRoomStore = create<RoomStore>((set, get) => {
   const ydoc = new Y.Doc();
-  const yNodes = ydoc.getArray<ShapeData>("shapes");
-  const yEdges = ydoc.getArray<Edge>("edges");
-  const undoManager = new Y.UndoManager([yNodes, yEdges]);
+  const yNodes = ydoc.getMap<ShapeData>("shapes");
+  const yEdges = ydoc.getMap<Edge>("edges");
 
+  // nur lokale Transaktionen tracken
+  const undoManager = new Y.UndoManager([yNodes, yEdges], {
+    trackedOrigins: new Set([ydoc.clientID]),
+  });
+
+  // sync Yjs → Zustand (map → array)
   const syncYjsToZustand = () => {
     set({
-      nodes: yNodes.toArray(),
-      edges: yEdges.toArray(),
+      nodes: Array.from(yNodes.values()),
+      edges: Array.from(yEdges.values()),
     });
   };
 
-  yNodes.observe(syncYjsToZustand);
-  yEdges.observe(syncYjsToZustand);
+  // optional: batch mehrere Transaktionen kurz zusammen
+  let syncScheduled = false;
+
+  ydoc.on("afterTransaction", () => {
+    if (!syncScheduled) {
+      syncScheduled = true;
+      Promise.resolve().then(() => {
+        syncYjsToZustand();
+        syncScheduled = false;
+      });
+    }
+  });
+
+  let provider: WebsocketProvider | null = null;
 
   return {
     roomData: null,
     roomImages: [],
+
+    setVersion: (version: number) => {
+      set((state) => ({
+        roomData: state.roomData ? { ...state.roomData, version } : null,
+      }));
+    },
 
     setRoomData: (room, roomImages) => set({ roomData: room, roomImages }),
 
@@ -79,97 +103,98 @@ export const useRoomStore = create<RoomStore>((set, get) => {
     nodes: [],
     edges: [],
 
-    setNodes: (nodes) => {
+    // --- NODE-Methoden über Y.Map ---
+
+    addNode: (node) => {
       ydoc.transact(() => {
-        yNodes.delete(0, yNodes.length);
-        yNodes.push(nodes);
-      });
+        yNodes.set(node.id, node);
+      }, ydoc.clientID);
     },
 
-    setEdges: (edges) => {
+    moveNodes: (positions) => {
       ydoc.transact(() => {
-        yEdges.delete(0, yEdges.length);
-        yEdges.push(edges);
-      });
-    },
+        positions.forEach(({ id, position }) => {
+          const orig = yNodes.get(id);
 
-    updateNode: (id, partialShapeData) => {
-      const index = yNodes.toArray().findIndex((el) => el.id === id);
+          if (!orig) {
+            // console.warn(`Skipping move für nicht-existierende Node ${id}`);
 
-      if (index !== -1) {
-        ydoc.transact(() => {
-          const original = yNodes.get(index)!;
-          const updated = {
-            ...original,
-            shape: {
-              ...original.shape,
-              ...partialShapeData,
-            },
-          };
-
-          yNodes.delete(index);
-          yNodes.insert(index, [updated]);
+            return;
+          }
+          yNodes.set(id, {
+            ...orig,
+            position: { ...orig.position, ...position },
+          });
         });
+      }, ydoc.clientID);
+    },
+
+    updateNode: (id, partial) => {
+      const orig = yNodes.get(id);
+
+      if (!orig) {
+        // console.warn(`Skipping update für nicht-existierende Node ${id}`);
+
+        return;
       }
+      ydoc.transact(() => {
+        yNodes.set(id, {
+          ...orig,
+          position: { ...orig.position, ...(partial.position ?? {}) },
+          shape: { ...orig.shape, ...(partial.shape ?? {}) },
+        });
+      }, ydoc.clientID);
     },
 
     removeNode: (id) => {
       ydoc.transact(() => {
-        const remainingNodes = yNodes.toArray().filter((n) => n.id !== id);
-        const remainingEdges = yEdges
-          .toArray()
-          .filter((e) => e.from !== id && e.to !== id);
-
-        yNodes.delete(0, yNodes.length);
-        yNodes.push(remainingNodes);
-
-        yEdges.delete(0, yEdges.length);
-        yEdges.push(remainingEdges);
-      });
+        // Node löschen
+        yNodes.delete(id);
+        // alle Kanten, die darauf zeigen, löschen
+        for (const [edgeId, edge] of yEdges) {
+          if (edge.from === id || edge.to === id) {
+            yEdges.delete(edgeId);
+          }
+        }
+      }, ydoc.clientID);
     },
 
-    addEdge: (edge) => {
-      // Prüfen, ob bereits eine Kante zwischen from und to existiert (egal ob Richtung)
-      const exists = get().edges.some(
-        (e) =>
-          (e.from === edge.from && e.to === edge.to) ||
-          (e.from === edge.to && e.to === edge.from),
-      );
+    // --- EDGE-Methoden über Y.Map ---
 
-      if (!exists) {
-        yEdges.push([edge]);
-      }
+    addEdge: (edge) => {
+      if (yEdges.has(edge.id)) return;
+      ydoc.transact(() => {
+        yEdges.set(edge.id, edge);
+      }, ydoc.clientID);
+    },
+
+    updateEdge: (id, partial) => {
+      const orig = yEdges.get(id);
+
+      if (!orig) return;
+      ydoc.transact(() => {
+        yEdges.set(id, { ...orig, ...partial });
+      }, ydoc.clientID);
     },
 
     removeEdge: (id) => {
       ydoc.transact(() => {
-        const remainingEdges = yEdges.toArray().filter((e) => e.id !== id);
-
-        yEdges.delete(0, yEdges.length);
-        yEdges.push(remainingEdges);
-      });
+        yEdges.delete(id);
+      }, ydoc.clientID);
     },
 
-    updateEdge: (id, partialEdge) => {
-      const index = yEdges.toArray().findIndex((e) => e.id === id);
-
-      if (index !== -1) {
-        ydoc.transact(() => {
-          const original = yEdges.get(index)!;
-          const updated: Edge = { ...original, ...partialEdge };
-
-          yEdges.delete(index);
-          yEdges.insert(index, [updated]);
-        });
-      }
+    // --- UNDO / REDO ---
+    undo: () => {
+      get().undoManager.undo();
+    },
+    redo: () => {
+      get().undoManager.redo();
     },
 
-    undo: () => undoManager.undo(),
-    redo: () => undoManager.redo(),
-
+    // --- INITIAL SYNC ---
     initYjsSync: async (roomId, initialState) => {
-      const provider = new WebsocketProvider(
-        "ws://localhost:1234",
+      provider = new WebsocketProvider(
+        import.meta.env.VITE_YJS_WS_URL,
         roomId,
         ydoc,
       );
@@ -178,16 +203,29 @@ export const useRoomStore = create<RoomStore>((set, get) => {
       provider.on("sync", (isSynced) => {
         if (!isSynced || initialized) return;
         initialized = true;
-        if (yNodes.length === 0 && yEdges.length === 0 && initialState) {
+        // bei leerem Map initial befüllen
+        if (yNodes.size === 0 && yEdges.size === 0 && initialState) {
           ydoc.transact(() => {
-            if (initialState.nodes) yNodes.push(initialState.nodes);
-            if (initialState.edges) yEdges.push(initialState.edges);
-          });
+            initialState.nodes?.forEach((n) => yNodes.set(n.id, n));
+            initialState.edges?.forEach((e) => yEdges.set(e.id, e));
+          }, ydoc.clientID);
         }
       });
+
       provider.on("status", ({ status }) => {
-        console.log(`🧠 Yjs Provider status: ${status}`);
+        console.debug(`Yjs Provider status: ${status}`);
       });
+
+      // awareness-Änderungen können Undo-Stack clearen, falls gewünscht
+      provider.awareness.on("change", () => {
+        undoManager.clear();
+      });
+
+      return () => {
+        // console.log("Cleaning up Yjs provider...");
+        provider?.destroy();
+        provider = null;
+      };
     },
   };
 });

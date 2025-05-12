@@ -64,6 +64,7 @@ export interface RoomData {
   _id: Id<"rooms">;
   _creationTime: number;
   title: string;
+  version: number;
   organizationId: string;
   authorId: string;
   authorName: string;

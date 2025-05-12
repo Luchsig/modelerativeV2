@@ -30,7 +30,8 @@ const Canvas: React.FC = () => {
   // ── Zustand aus Store
   const nodes = useRoomStore((s) => s.nodes);
   const edges = useRoomStore((s) => s.edges);
-  const setNodes = useRoomStore((s) => s.setNodes);
+  const moveNodes = useRoomStore((s) => s.moveNodes);
+  const addNode = useRoomStore((s) => s.addNode);
   const addEdge = useRoomStore((s) => s.addEdge);
   const updateEdge = useRoomStore((s) => s.updateEdge);
   const removeEdge = useRoomStore((s) => s.removeEdge);
@@ -79,12 +80,9 @@ const Canvas: React.FC = () => {
         y: e.clientY - rect.top,
       });
 
-      setNodes([
-        ...nodes,
-        { id: crypto.randomUUID(), position: pos, shape: comp },
-      ]);
+      addNode({ id: crypto.randomUUID(), position: pos, shape: comp });
     },
-    [nodes, setNodes, snapToGrid],
+    [nodes, addNode, snapToGrid],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -97,32 +95,25 @@ const Canvas: React.FC = () => {
     (upd: ShapeData) => {
       const p = snapToGrid(upd.position);
 
-      setNodes(
-        nodes.map((n) => (n.id === upd.id ? { ...upd, position: p } : n)),
-      );
+      updateNode(upd.id, {
+        position: p,
+        shape: upd.shape,
+      });
     },
-    [nodes, setNodes, snapToGrid],
+    [snapToGrid, updateNode],
   );
 
   // ── Drag-Group
   const handleGroupDragEnd = useCallback(
     (_ids: string[], updatedShapes: ShapeData[]) => {
-      setNodes(
-        nodes.map((node) => {
-          const u = updatedShapes.find((u) => u.id === node.id);
-
-          if (u) {
-            return {
-              ...node,
-              position: u.position,
-            };
-          }
-
-          return node;
-        }),
+      moveNodes(
+        updatedShapes.map((u) => ({
+          id: u.id,
+          position: u.position,
+        })),
       );
     },
-    [nodes, setNodes],
+    [moveNodes],
   );
 
   // ── Klick auf Node
@@ -323,8 +314,20 @@ const Canvas: React.FC = () => {
           const newName = prompt(promptText, "")?.trim();
 
           if (newName) {
-            if (t.type === "node") updateNode(t.id, { text: newName });
-            else updateEdge(t.id, { text: newName });
+            if (t.type === "node") {
+              const node = nodes.find((n) => n.id === t.id);
+
+              if (!node) return;
+
+              updateNode(t.id, {
+                shape: {
+                  ...node.shape,
+                  text: newName,
+                },
+              });
+            } else {
+              updateEdge(t.id, { text: newName });
+            }
           }
           setMenuVisible(false);
         }}
