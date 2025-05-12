@@ -1,23 +1,11 @@
 services:
   - type: web
-    name: frontend
+    name: yjs-server
     env: docker
-    dockerfilePath: ./Dockerfile
-    buildCommand: npm install && npm run build
-    startCommand: nginx -g 'daemon off;'
-    envVars:
-      - key: VITE_YJS_WS_URL
-        value: ws://modelerative.onrender.com
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-
-  - type: web
-    name: yjs
-    env: docker
+    plan: free
     dockerfilePath: ./server/Dockerfile
-    startCommand: npx y-websocket --port 1234 --host 0.0.0.0
     envVars:
       - key: PORT
         value: 1234
+      - key: HOST
+        value: 0.0.0.0
