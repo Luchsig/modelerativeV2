@@ -35,7 +35,6 @@ export const CanvasPage = () => {
       ? { roomId: roomId as Id<"rooms"> }
       : "skip",
   );
-
   const setRoomData = useRoomStore((state) => state.setRoomData);
   const initYjsSync = useRoomStore((state) => state.initYjsSync);
 

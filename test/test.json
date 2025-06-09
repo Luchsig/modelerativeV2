@@ -91,6 +91,25 @@
       "typeDescription": "A custom shape with an image",
       "isTextEnabled": true,
       "connectableTypes": [1,2]
+    },
+    {
+      "id": 7,
+      "shape": "rectangle",
+      "imageProps": {
+        "src": "test3.svg",
+        "width": 40,
+        "height": 40,
+        "imagePosition": "BL"
+      },
+      "size": {
+        "width": 150,
+        "height": 80
+      },
+      "color": "lightblue",
+      "typeName": "Noch ein neuer",
+      "typeDescription": "A custom shape with an image",
+      "isTextEnabled": true,
+      "connectableTypes": [1,2]
     }
   ]
 }

@@ -133,6 +133,55 @@ export const update = mutation({
   },
 });
 
+export const updateComponents = mutation({
+  args: {
+    id: v.id("rooms"),
+    component: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const room = await ctx.db.get(args.id);
+
+    if (!room) {
+      throw new Error("Room not found");
+    }
+
+    let components: any[] = [];
+
+    try {
+      components = JSON.parse(room.components || "[]");
+    } catch (e) {
+      throw new Error("Invalid components format in database");
+    }
+
+    // Neue ID bestimmen
+    const newId =
+      components.reduce((max, comp) => Math.max(max, comp.id ?? 0), 0) + 1;
+
+    // Neue Komponente parsen und mit ID versehen
+    let newComponent;
+
+    try {
+      newComponent = JSON.parse(args.component);
+    } catch (e) {
+      throw new Error("Invalid component format");
+    }
+
+    newComponent.id = newId;
+    components.push(newComponent);
+
+    // Komponenten-Array wieder als String speichern
+    return await ctx.db.patch(args.id, {
+      components: JSON.stringify(components),
+    });
+  },
+});
+
 export const favorite = mutation({
   args: { id: v.id("rooms"), organizationId: v.string() },
   handler: async (ctx, args) => {
