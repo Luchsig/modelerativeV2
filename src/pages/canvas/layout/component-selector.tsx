@@ -21,7 +21,7 @@ const fallback: SchemaShape[] = [
   },
 ];
 
-export const ComponentSelector = ( ) => {
+export const ComponentSelector = () => {
   const roomData = useRoomStore((state) => state.roomData);
   const { onOpen } = useComponentCustomizer();
   const previewStageSize = { width: 120, height: 80 };
@@ -56,11 +56,19 @@ export const ComponentSelector = ( ) => {
         <div className="flex flex-col gap-1 mt-2">
           {parsedComponents.map((shape: SchemaShape) => (
             // eslint-disable-next-line react/jsx-key
-            <Tooltip content={shape.typeDescription} placement="right">
+            <Tooltip
+              content={
+                <div className="max-w-xs">
+                  <div className="font-bold">{shape.typeName}</div>
+                  <div className="mt-1 text-sm">{shape.typeDescription}</div>
+                </div>
+              }
+              placement="right"
+            >
               <div
                 key={shape.id ?? shape.typeName}
                 draggable
-                className="flex flex-col justify-center bg-white border-purple-100 border shadow cursor-grab rounded-lg py-1 ring-gray-900/5"
+                className="flex flex-col justify-center bg-white border-purple-100 border shadow cursor-grab rounded-lg ring-gray-900/5"
                 onDragStart={(e) => {
                   e.dataTransfer.effectAllowed = "copy";
                   e.dataTransfer.setData(
@@ -74,9 +82,6 @@ export const ComponentSelector = ( ) => {
                     <SidebarTemplate {...shape} />
                   </Layer>
                 </Stage>
-                <div className="text-xs text-center text-gray-700 dark:text-gray-300 max-w-[120px]break-words">
-                  {shape.typeName}
-                </div>
               </div>
             </Tooltip>
           ))}

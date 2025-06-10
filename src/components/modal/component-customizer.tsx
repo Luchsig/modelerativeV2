@@ -39,6 +39,7 @@ import "react-color-palette/css";
 import { useRoomStore } from "@/store/use-room-store.ts";
 
 import { Spinner } from "@heroui/spinner";
+
 import { useImageCreator } from "@/hooks/use-image-creator.ts";
 
 const ComponentCustomizer = () => {
@@ -59,7 +60,7 @@ const ComponentCustomizer = () => {
       id: crypto.randomUUID(),
       size: {
         width: 180,
-        height: 150,
+        height: 100,
         radius: 60,
       },
       color: "#8888ff",
@@ -68,6 +69,12 @@ const ComponentCustomizer = () => {
       connectableTypes: "",
       isTextEnabled: true,
       text: "",
+      imageProps: {
+        src: "",
+        width: 30,
+        height: 30,
+        imagePosition: "TL", // Top Left
+      },
     };
 
     setShape(defaultShape);
@@ -77,7 +84,7 @@ const ComponentCustomizer = () => {
     e.preventDefault();
     mutate({
       id: initialValues.id,
-      component: shape,
+      component: JSON.stringify(shape),
     })
       .then(() => {
         addToast({
@@ -173,12 +180,14 @@ const ComponentCustomizer = () => {
                   <Divider orientation={"horizontal"} />
                   <div className={"flex flex-row gap-4"}>
                     <Input
+                      isRequired
                       label="Name"
                       value={shape.typeName}
                       onValueChange={(val) => handleChange("typeName", val)}
                     />
                     <Select
-                      disallowEmptySelection={false}
+                      isRequired
+                      disallowEmptySelection={true}
                       label="Shape"
                       selectedKeys={new Set([shape.shape])}
                       selectionMode="single"
@@ -219,10 +228,11 @@ const ComponentCustomizer = () => {
                   </div>
 
                   <div className={"flex flex-row gap-4"}>
-                    {shape?.shape !== ShapeType.Circle && (
+                    {shape?.shape !== ShapeType.Circle ? (
                       <>
                         <NumberInput
                           hideStepper
+                          isRequired
                           defaultValue={180}
                           label="Width"
                           type="number"
@@ -233,7 +243,8 @@ const ComponentCustomizer = () => {
                         />
                         <NumberInput
                           hideStepper
-                          defaultValue={150}
+                          isRequired
+                          defaultValue={100}
                           label="Height"
                           type="number"
                           value={shape.size.height}
@@ -242,18 +253,21 @@ const ComponentCustomizer = () => {
                           }
                         />
                       </>
-                    )}
-                    {shape?.shape == ShapeType.Circle && (
-                      <NumberInput
-                        hideStepper
-                        defaultValue={60}
-                        disabled={shape.shape !== ShapeType.Circle}
-                        label="Radius"
-                        value={shape.size.radius}
-                        onValueChange={(val: number) =>
-                          handleSizeChange("radius", val)
-                        }
-                      />
+                    ) : (
+                      <>
+                        <NumberInput
+                          hideStepper
+                          isRequired
+                          defaultValue={60}
+                          disabled={shape.shape !== ShapeType.Circle}
+                          label="Radius"
+                          value={shape.size.radius}
+                          onValueChange={(val: number) =>
+                            handleSizeChange("radius", val)
+                          }
+                        />
+                        <div className={"w-full"} />
+                      </>
                     )}
                   </div>
                   <div className={"flex flex-row gap-4"}>
@@ -273,6 +287,7 @@ const ComponentCustomizer = () => {
                           color={color}
                           height={100}
                           hideAlpha={true}
+                          hideInput={["rgb", "hsv"]}
                           onChange={(c) => {
                             setColor(c);
                             handleChange("color", c.hex);
@@ -308,7 +323,7 @@ const ComponentCustomizer = () => {
                     }}
                   >
                     <AccordionItem key="images" title="Images">
-                      <div className={"flex flex-row gap-4 mb-3"}>
+                      <div className={"flex flex-row gap-4 pb-4"}>
                         <Select
                           className="max-w-xs"
                           items={imageOptions}
@@ -335,19 +350,19 @@ const ComponentCustomizer = () => {
                             <SelectItem key={item.key}>{item.label}</SelectItem>
                           )}
                         </Select>
-                        <Button
-                          isIconOnly
-                          aria-label="Upload"
-                          className={"border-none"}
-                          color={"secondary"}
-                          size={"sm"}
-                          variant="bordered"
-                          onPress={() => {
-                            imageInputRef.current?.click();
-                          }}
-                        >
-                          <UploadIcon className="h-6 w-6" />
-                        </Button>
+                        <div className="flex justify-center items-center h-full py-2">
+                          <Button
+                            isIconOnly
+                            aria-label="Upload"
+                            className="border-none"
+                            color="secondary"
+                            size="sm"
+                            variant="bordered"
+                            onPress={() => imageInputRef.current?.click()}
+                          >
+                            <UploadIcon className="h-6 w-6" />
+                          </Button>
+                        </div>
                         {uploading && <Spinner className="ml-2" size="sm" />}
                         <Input
                           ref={imageInputRef}
@@ -358,53 +373,60 @@ const ComponentCustomizer = () => {
                         />
                       </div>
 
-                      <div className={"flex flex-row gap-4"}>
-                        <div className="flex flex-row gap-4">
-                          <NumberInput
-                            hideStepper
-                            label="Image Width"
-                            labelPlacement="inside"
-                            placeholder="Enter image width"
-                            value={shape.imageProps?.width ?? 0}
-                            onValueChange={(v) =>
-                              handleImagePropsChange("width", Number(v))
-                            }
-                          />
-                          <NumberInput
-                            hideStepper
-                            label="Image Height"
-                            labelPlacement="inside"
-                            placeholder="Enter image height"
-                            value={shape.imageProps?.height ?? 0}
-                            onValueChange={(v) =>
-                              handleImagePropsChange("height", Number(v))
-                            }
-                          />
-                        </div>
-                        <Select
-                          className="max-w-xs"
-                          label="Image Position"
-                          labelPlacement="inside"
-                          selectedKeys={
-                            new Set([shape.imageProps?.imagePosition ?? "none"])
-                          }
-                          selectionMode="single"
-                          onSelectionChange={(keys) => {
-                            const pos = Array.from(keys)[0] as string;
+                      {shape?.shape !== ShapeType.Custom &&
+                        shape.imageProps?.src && (
+                          <div className={"flex flex-row gap-4"}>
+                            <div className="flex flex-row gap-4">
+                              <NumberInput
+                                hideStepper
+                                isRequired={!!shape.imageProps?.src}
+                                label="Image Width"
+                                labelPlacement="inside"
+                                placeholder="Enter image width"
+                                value={shape.imageProps?.width ?? 30}
+                                onValueChange={(v) =>
+                                  handleImagePropsChange("width", Number(v))
+                                }
+                              />
+                              <NumberInput
+                                hideStepper
+                                isRequired={!!shape.imageProps?.src}
+                                label="Image Height"
+                                labelPlacement="inside"
+                                placeholder="Enter image height"
+                                value={shape.imageProps?.height ?? 30}
+                                onValueChange={(v) =>
+                                  handleImagePropsChange("height", Number(v))
+                                }
+                              />
+                            </div>
+                            <Select
+                              disallowEmptySelection
+                              className="max-w-xs"
+                              isRequired={!!shape.imageProps?.src}
+                              label="Image Position"
+                              labelPlacement="inside"
+                              selectedKeys={
+                                new Set([
+                                  shape.imageProps?.imagePosition
+                                    ? shape.imageProps.imagePosition
+                                    : "TL", // Standardwert
+                                ])
+                              }
+                              selectionMode="single"
+                              onSelectionChange={(keys) => {
+                                const pos = Array.from(keys)[0] as string;
 
-                            handleImagePropsChange(
-                              "imagePosition",
-                              pos === "none" ? "" : pos,
-                            );
-                          }}
-                        >
-                          <SelectItem key="none">None</SelectItem>
-                          <SelectItem key="TL">Top Left</SelectItem>
-                          <SelectItem key="TR">Top Right</SelectItem>
-                          <SelectItem key="BL">Bottom Left</SelectItem>
-                          <SelectItem key="BR">Bottom Right</SelectItem>
-                        </Select>
-                      </div>
+                                handleImagePropsChange("imagePosition", pos);
+                              }}
+                            >
+                              <SelectItem key="TL">Top Left</SelectItem>
+                              <SelectItem key="TR">Top Right</SelectItem>
+                              <SelectItem key="BL">Bottom Left</SelectItem>
+                              <SelectItem key="BR">Bottom Right</SelectItem>
+                            </Select>
+                          </div>
+                        )}
                     </AccordionItem>
                   </Accordion>
                 </div>

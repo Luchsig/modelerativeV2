@@ -26,7 +26,9 @@ export const InfoBar = () => {
       </Link>
       <Divider className={"my-4"} orientation="vertical" />
       <div className="flex flex-row items-center space-x-2">
-        <p className="text-foreground">{roomData.title}</p>
+        <p className="text-foreground whitespace-normal break-words min-w-[20ch]">
+          {roomData.title}
+        </p>
         <Button
           isIconOnly
           aria-label="Edit"

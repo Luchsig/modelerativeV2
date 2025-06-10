@@ -151,17 +151,26 @@ export const updateComponents = mutation({
       throw new Error("Room not found");
     }
 
-    let components: any[] = [];
+    // Bestehende Komponenten parsen
+    let componentsWrapper: { shapes: any[] };
 
     try {
-      components = JSON.parse(room.components || "[]");
+      const parsed = JSON.parse(room.components || '{"shapes": []}');
+
+      if (!Array.isArray(parsed.shapes)) {
+        throw new Error("Parsed components.shapes is not an array");
+      }
+      componentsWrapper = parsed;
     } catch (e) {
       throw new Error("Invalid components format in database");
     }
 
     // Neue ID bestimmen
     const newId =
-      components.reduce((max, comp) => Math.max(max, comp.id ?? 0), 0) + 1;
+      componentsWrapper.shapes.reduce(
+        (max, comp) => Math.max(max, comp.id ?? 0),
+        0,
+      ) + 1;
 
     // Neue Komponente parsen und mit ID versehen
     let newComponent;
@@ -173,11 +182,11 @@ export const updateComponents = mutation({
     }
 
     newComponent.id = newId;
-    components.push(newComponent);
+    componentsWrapper.shapes.push(newComponent);
 
-    // Komponenten-Array wieder als String speichern
+    // Komponenten-Objekt als JSON speichern
     return await ctx.db.patch(args.id, {
-      components: JSON.stringify(components),
+      components: JSON.stringify(componentsWrapper),
     });
   },
 });

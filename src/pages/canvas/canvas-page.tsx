@@ -1,5 +1,5 @@
 // src/pages/canvas/canvas-page.tsx
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { Spinner } from "@heroui/react";
@@ -17,7 +17,6 @@ import { useAutoSaveRoom } from "@/hooks/use-save-room.ts";
 
 export const CanvasPage = () => {
   const { roomId } = useParams<{ roomId: string }>();
-  const isInitialized = useRef(false);
   const { isLoaded, isSignedIn } = useAuth();
 
   useAutoSaveRoom(5000);
@@ -39,7 +38,13 @@ export const CanvasPage = () => {
   const initYjsSync = useRoomStore((state) => state.initYjsSync);
 
   useEffect(() => {
-    if (roomData && nodeImages && roomId && !isInitialized.current) {
+    console.log("[CanvasPage] useEffect triggered:", {
+      roomData,
+      nodeImages,
+      roomId,
+    });
+
+    if (roomData && nodeImages && roomId) {
       const shapes = roomData.stateNodes ? JSON.parse(roomData.stateNodes) : [];
       const edges = roomData.stateEdges ? JSON.parse(roomData.stateEdges) : [];
 
@@ -53,7 +58,6 @@ export const CanvasPage = () => {
       setRoomData(normalizedRoomData, nodeImages);
 
       initYjsSync(roomId as Id<"rooms">, { nodes: shapes, edges });
-      isInitialized.current = true;
     }
   }, [roomData, nodeImages, roomId, setRoomData, initYjsSync]);
 
