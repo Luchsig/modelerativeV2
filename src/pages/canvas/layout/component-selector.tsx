@@ -68,7 +68,7 @@ export const ComponentSelector = () => {
               <div
                 key={shape.id ?? shape.typeName}
                 draggable
-                className="flex flex-col justify-center bg-white border-purple-100 border shadow cursor-grab rounded-lg ring-gray-900/5"
+                className="flex flex-col justify-center bg-white border-b-2 cursor-grab ring-gray-900/5"
                 onDragStart={(e) => {
                   e.dataTransfer.effectAllowed = "copy";
                   e.dataTransfer.setData(
