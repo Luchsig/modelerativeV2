@@ -1,5 +1,5 @@
 // src/pages/canvas/canvas-page.tsx
-import { useEffect } from "react";
+import {useEffect, useRef} from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { Spinner } from "@heroui/react";
@@ -37,27 +37,31 @@ export const CanvasPage = () => {
   const setRoomData = useRoomStore((state) => state.setRoomData);
   const initYjsSync = useRoomStore((state) => state.initYjsSync);
 
-  useEffect(() => {
-    console.log("[CanvasPage] useEffect triggered:", {
-      roomData,
-      nodeImages,
-      roomId,
-    });
+  const hasInitialized = useRef(false);
 
+  useEffect(() => {
+    if (!hasInitialized.current && roomData && nodeImages && roomId) {
+      const nodes = roomData.stateNodes ? JSON.parse(roomData.stateNodes) : [];
+      const edges = roomData.stateEdges ? JSON.parse(roomData.stateEdges) : [];
+
+      initYjsSync(roomId as Id<"rooms">, { nodes, edges });
+      hasInitialized.current = true;
+    }
+  }, [roomData, nodeImages, roomId, initYjsSync]);
+
+  useEffect(() => {
     if (roomData && nodeImages && roomId) {
-      const shapes = roomData.stateNodes ? JSON.parse(roomData.stateNodes) : [];
+      const nodes = roomData.stateNodes ? JSON.parse(roomData.stateNodes) : [];
       const edges = roomData.stateEdges ? JSON.parse(roomData.stateEdges) : [];
 
       const normalizedRoomData = {
         ...roomData,
-        stateNodes: shapes,
+        stateNodes: nodes,
         stateEdges: edges,
         version: roomData.stateVersion ?? 0,
       };
 
       setRoomData(normalizedRoomData, nodeImages);
-
-      initYjsSync(roomId as Id<"rooms">, { nodes: shapes, edges });
     }
   }, [roomData, nodeImages, roomId, setRoomData, initYjsSync]);
 
