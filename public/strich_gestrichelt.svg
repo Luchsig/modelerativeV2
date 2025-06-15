@@ -1,0 +1,10 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="160" height="160">
+	<title>Neues Projekt</title>
+	<style>
+		.s0 { fill: #000000;stroke: #000000;stroke-miterlimit:100;stroke-width: 30 } 
+	</style>
+	<path id="Background" fill-rule="evenodd" class="s0" d="m0 542.2v-5h176.5v5z"/>
+	<path id="Layer 1" fill-rule="evenodd" class="s0" d="m298 542.2v-5h176.5v5z"/>
+	<path id="Layer 1 copy" fill-rule="evenodd" class="s0" d="m592 542.2v-5h176.5v5z"/>
+	<path id="Layer 1 copy 2" fill-rule="evenodd" class="s0" d="m890 542.2v-5h176.5v5z"/>
+</svg>
