@@ -1,9 +1,9 @@
 import type Konva from "konva";
-import type {Position, ShapeData} from "@/types/canvas.ts";
 
-import {useCallback, useEffect, useRef, useState} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import {calcBoundaryPoint} from "@/pages/canvas/components/edges/geometry.ts";
+import { Edge, Position, ShapeData } from "@/types/canvas.ts";
+import { calcBoundaryPoint } from "@/pages/canvas/components/edges/geometry.ts";
 
 export interface EdgePreview {
   from: Position;
@@ -13,7 +13,7 @@ export interface EdgePreview {
 
 export function useEdgeDrag(
   nodes: ShapeData[],
-  addEdge: (edge: { id: string; from: string; to: string }) => void,
+  addEdge: (edge: Edge) => void,
   stageRef: React.RefObject<Konva.Stage>,
 ) {
   const [previewEdge, setPreviewEdge] = useState<EdgePreview | undefined>(
@@ -52,7 +52,14 @@ export function useEdgeDrag(
         const toId = grp?.id();
 
         if (toId && toId !== nodeId) {
-          addEdge({ id: crypto.randomUUID(), from: nodeId, to: toId });
+          addEdge({
+            endStyle: "filled",
+            lineStyle: "solid",
+            startStyle: "none",
+            id: crypto.randomUUID(),
+            from: nodeId,
+            to: toId,
+          });
         }
       }
     }

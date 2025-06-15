@@ -1,6 +1,5 @@
 // src/pages/layout/components/layout/edge-renderer.tsx
-
-import React, { useMemo } from "react";
+import React, {useMemo} from "react";
 import { Layer, Arrow, Text, Group } from "react-konva";
 
 import { Edge, ShapeData, Position } from "@/types/canvas.ts";
@@ -10,6 +9,7 @@ import {
   getCenter,
   getLineIntersection,
 } from "@/pages/canvas/components/edges/geometry.ts";
+import { CustomTip } from "@/pages/canvas/components/edges/custom-tip.tsx";
 
 interface Props {
   edges: Edge[];
@@ -32,7 +32,6 @@ export const EdgeRenderer: React.FC<Props> = ({
     end: Position;
     text: string | undefined;
   };
-
   const segments = useMemo<Segment[]>(() => {
     return edges
       .map<Segment | null>((e) => {
@@ -107,28 +106,49 @@ export const EdgeRenderer: React.FC<Props> = ({
   return (
     <Layer>
       {segments.map(({ id, start, end, text }) => {
+        const eD = edges.find((e) => e.id === id);
+
+        if (!eD) return null;
+
         const isSelected = id === selectedEdgeId;
         const pts = buildCurvedPoints(start, end, cutsMap.get(id) || []);
-
+        const dashArr = eD.lineStyle === "dashed" ? [10, 5] : [];
+        const ang = Math.atan2(end.y - start.y, end.x - start.x);
+        const strokeColor = isSelected ? "#007aff" : "#333";
         const midX = (start.x + end.x) / 2;
         const midY = (start.y + end.y) / 2;
 
         return (
           <Group key={id} id={id}>
             <Arrow
-              fill={isSelected ? "#007aff" : "#333"}
+              dash={dashArr}
+              fill={strokeColor}
               hitStrokeWidth={20}
               id={id}
-              pointerLength={8}
-              pointerWidth={8}
+              pointerLength={0}
+              pointerWidth={0}
               points={pts}
-              stroke={isSelected ? "#007aff" : "#333"}
+              stroke={strokeColor}
               strokeWidth={isSelected ? 4 : 2}
               tension={0}
               onClick={(e) => {
                 e.evt.cancelBubble = true;
                 onEdgeClick(id);
               }}
+            />
+            <CustomTip
+              angle={ang + Math.PI}
+              stroke={strokeColor}
+              style={eD.startStyle}
+              x={start.x}
+              y={start.y}
+            />
+            <CustomTip
+              angle={ang}
+              stroke={strokeColor}
+              style={eD.endStyle}
+              x={end.x}
+              y={end.y}
             />
             {text !== undefined && (
               <Text

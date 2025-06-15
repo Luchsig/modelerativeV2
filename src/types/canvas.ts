@@ -53,11 +53,26 @@ export enum AnchorName {
   Left = "left",
 }
 
+export type MenuTarget = {
+  type: "node" | "edge";
+  isTextEnabled: boolean;
+  edgeStart?: string;
+  edgeLine?: string;
+  edgeEnd?: string;
+  id: string;
+};
+
+export type ArrowStyle = "filled" | "outline" | "none";
+export type LineStyle = "solid" | "dashed";
+
 export interface Edge {
   id: string;
   from: string;
   to: string;
   text?: string;
+  lineStyle: LineStyle;
+  startStyle: ArrowStyle;
+  endStyle: ArrowStyle;
 }
 
 export interface RoomData {

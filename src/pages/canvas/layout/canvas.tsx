@@ -17,10 +17,8 @@ import GridLayer from "@/pages/canvas/components/grid-layer.tsx";
 import NodeLayer from "@/pages/canvas/components/nodes/node-layer.tsx";
 import { useSnapToGrid } from "@/pages/canvas/hooks/use-snap-to-grid.ts";
 import { useKeyPress } from "@/pages/canvas/hooks/use-key-press.ts";
-import ContextMenu, {
-  MenuTarget,
-} from "@/pages/canvas/components/context-menu.tsx";
-import { ShapeData } from "@/types/canvas.ts";
+import ContextMenu from "@/pages/canvas/components/context-menu.tsx";
+import {MenuTarget, ShapeData} from "@/types/canvas.ts";
 import { useEdgeDrag } from "@/pages/canvas/hooks/use-edge-drag.ts";
 import { useMarqueeSelection } from "@/pages/canvas/hooks/use-marquee-selection.ts";
 
@@ -150,9 +148,18 @@ const Canvas: React.FC = () => {
       setMenuPos({ x: rect.left + ptr.x + 4, y: rect.top + ptr.y + 4 });
 
       if (e.target.getClassName() === "Arrow") {
+        // für Edges: Suche die Group, dann aus dem Store das richtige ShapeData
+        const edgeId = e.target.id();
+        const edgeData = edges.find((n) => n.id === edgeId);
+
+        if (!edgeData) return;
+
         setMenuTarget({
           type: "edge",
-          id: e.target.id(),
+          id: edgeId,
+          edgeStart: edgeData.startStyle ?? "none",
+          edgeLine: edgeData.lineStyle ?? "solid",
+          edgeEnd: edgeData.endStyle ?? "filled",
           isTextEnabled: true,
         });
       } else {
@@ -300,6 +307,17 @@ const Canvas: React.FC = () => {
         visible={menuVisible}
         x={menuPos.x}
         y={menuPos.y}
+        onArrowStyleChange={(id, styles) => {
+          const { startStyle, lineStyle, endStyle } = styles;
+
+          updateEdge(id, {
+            startStyle,
+            lineStyle,
+            endStyle,
+          });
+
+          setMenuVisible(false);
+        }}
         onClose={() => setMenuVisible(false)}
         onDelete={(t) => {
           if (t.type === "node") removeNode(t.id);
