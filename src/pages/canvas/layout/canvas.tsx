@@ -18,7 +18,7 @@ import NodeLayer from "@/pages/canvas/components/nodes/node-layer.tsx";
 import { useSnapToGrid } from "@/pages/canvas/hooks/use-snap-to-grid.ts";
 import { useKeyPress } from "@/pages/canvas/hooks/use-key-press.ts";
 import ContextMenu from "@/pages/canvas/components/context-menu.tsx";
-import {MenuTarget, ShapeData} from "@/types/canvas.ts";
+import { MenuTarget, ShapeData } from "@/types/canvas.ts";
 import { useEdgeDrag } from "@/pages/canvas/hooks/use-edge-drag.ts";
 import { useMarqueeSelection } from "@/pages/canvas/hooks/use-marquee-selection.ts";
 
@@ -315,8 +315,6 @@ const Canvas: React.FC = () => {
             lineStyle,
             endStyle,
           });
-
-          setMenuVisible(false);
         }}
         onClose={() => setMenuVisible(false)}
         onDelete={(t) => {

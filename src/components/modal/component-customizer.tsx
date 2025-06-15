@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Accordion,
   AccordionItem,
@@ -28,6 +26,7 @@ import { addToast } from "@heroui/toast";
 import { ColorPicker, useColor } from "react-color-palette";
 import { NumberInput } from "@heroui/number-input";
 import { UploadIcon } from "lucide-react";
+import { Spinner } from "@heroui/spinner";
 
 import { api } from "../../../convex/_generated/api";
 
@@ -37,27 +36,30 @@ import { useComponentCustomizer } from "@/store/use-component-customizer.ts";
 import { useApiMutation } from "@/hooks/use-api-mutation.ts";
 import "react-color-palette/css";
 import { useRoomStore } from "@/store/use-room-store.ts";
-
-import { Spinner } from "@heroui/spinner";
-
 import { useImageCreator } from "@/hooks/use-image-creator.ts";
 
-const ComponentCustomizer = () => {
+const shapeOptions = Object.values(ShapeType) as ShapeType[];
+
+const ComponentCustomizer = ({}) => {
   const { isOpen, onClose, initialValues } = useComponentCustomizer();
-  const [shape, setShape] = useState<SchemaShape | null>(null);
   const { mutate } = useApiMutation(api.room.updateComponents);
+  const { roomImages } = useRoomStore();
+
+  const previewStageSize = { width: 350, height: 300 };
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  const [shape, setShape] = useState<SchemaShape | null>(null);
   const [color, setColor] = useColor("#8888ff");
   const [expanded, setExpanded] = useState(false);
   const [expandedImages, setExpandedImages] = useState(false);
-  const { roomImages } = useRoomStore();
-  const previewStageSize = { width: 350, height: 300 };
-  const imageInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [imageOptions, setImageOptions] = useState<
+    { key: string; label: string }[]
+  >([]);
 
   useEffect(() => {
     const defaultShape: SchemaShape = {
       shape: ShapeType.Rectangle,
-      id: crypto.randomUUID(),
       size: {
         width: 180,
         height: 100,
@@ -79,6 +81,17 @@ const ComponentCustomizer = () => {
 
     setShape(defaultShape);
   }, [initialValues]);
+
+  useEffect(() => {
+    setImageOptions(
+      roomImages.map((img) => ({
+        key: img.name,
+        label: img.name,
+      })),
+    );
+
+    imageOptions.unshift({ key: "none", label: "None" });
+  }, [roomImages]);
 
   const onSubmit: FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
@@ -135,8 +148,6 @@ const ComponentCustomizer = () => {
     const newImage = event.target.files?.[0];
 
     if (!newImage) return;
-
-    // Prüfung, ob Bild bereits existiert
     if (
       roomImages.some(
         (img) => img.name === newImage.name && img.size === newImage.size,
@@ -161,16 +172,9 @@ const ComponentCustomizer = () => {
 
   if (!shape) return null;
 
-  const imageOptions = roomImages.map((img) => ({
-    key: img.name,
-    label: img.name,
-  }));
-
-  imageOptions.unshift({ key: "none", label: "None" });
-
   return (
-    <Modal isOpen={isOpen} title="Customize Component" onClose={onClose}>
-      <ModalContent className="w-[75vw] max-w-[75vw]">
+    <Modal className={"relative"} isOpen={isOpen} onClose={onClose}>
+      <ModalContent className="w-[75vw] max-w-[75vw] overflow-visible">
         {(onClose) => (
           <>
             <ModalHeader>Design New Component</ModalHeader>
@@ -186,27 +190,23 @@ const ComponentCustomizer = () => {
                       onValueChange={(val) => handleChange("typeName", val)}
                     />
                     <Select
+                      disallowEmptySelection
                       isRequired
-                      disallowEmptySelection={true}
                       label="Shape"
                       selectedKeys={new Set([shape.shape])}
                       selectionMode="single"
                       onSelectionChange={(keys) => {
                         const val = Array.from(keys)[0] as ShapeType;
 
-                        if (val === ShapeType.Custom) {
-                          setExpandedImages(true);
-                        } else {
-                          setExpandedImages(false);
-                        }
+                        setExpandedImages(val === ShapeType.Custom);
                         handleChange("shape", val);
                       }}
                     >
-                      <SelectItem key={ShapeType.Rectangle}>
-                        Rectangle
-                      </SelectItem>
-                      <SelectItem key={ShapeType.Circle}>Circle</SelectItem>
-                      <SelectItem key={ShapeType.Custom}>Custom</SelectItem>
+                      {shapeOptions.map((opt) => (
+                        <SelectItem key={opt} aria-label={opt}>
+                          {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                        </SelectItem>
+                      ))}
                     </Select>
                   </div>
                   <div className={"flex flex-row gap-4"}>
@@ -325,6 +325,7 @@ const ComponentCustomizer = () => {
                     <AccordionItem key="images" title="Images">
                       <div className={"flex flex-row gap-4 pb-4"}>
                         <Select
+                          aria-label="Image"
                           className="max-w-xs"
                           items={imageOptions}
                           label="Image"

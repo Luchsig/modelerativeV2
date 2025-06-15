@@ -160,9 +160,15 @@ export const useRoomStore = create<RoomStore>((set, get) => {
     },
 
     // --- EDGE-Methoden über Y.Map ---
-
     addEdge: (edge) => {
-      if (yEdges.has(edge.id)) return;
+      const exists = Array.from(yEdges.values()).some(
+        (e) =>
+          (e.from === edge.from && e.to === edge.to) ||
+          (e.from === edge.to && e.to === edge.from),
+      );
+
+      if (exists) return; // Kante zwischen from–to existiert bereits
+
       ydoc.transact(() => {
         yEdges.set(edge.id, edge);
       }, ydoc.clientID);

@@ -83,7 +83,6 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
     }
   }, [target]);
 
-  // Propagiere Änderungen direkt nach Auswahl:
   useEffect(() => {
     if (!target || target.type !== "edge") return;
 
