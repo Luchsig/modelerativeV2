@@ -238,10 +238,22 @@ const ResizableTemplate: FC<Props> = ({
       >
         {/* Shape */}
         {shape.shape === ShapeType.Rectangle && (
-          <Rect cornerRadius={8} fill={color} height={h} width={w} />
+          <Rect
+            cornerRadius={8}
+            fill={color}
+            height={h}
+            stroke={"#000"}
+            strokeWidth={2}
+            width={w}
+          />
         )}
         {shape.shape === ShapeType.Circle && (
-          <Circle fill={color} radius={size.radius ?? 25} />
+          <Circle
+            fill={color}
+            radius={size.radius ?? 25}
+            stroke={"#000"}
+            strokeWidth={2}
+          />
         )}
         {shape.shape === ShapeType.Custom && img && (
           <KonvaImage height={h} image={img} width={w} />

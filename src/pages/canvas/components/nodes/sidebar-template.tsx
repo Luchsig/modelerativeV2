@@ -77,12 +77,21 @@ const SidebarTemplate: FC<SidebarTemplateProps> = ({
   return (
     <Group ref={groupRef} draggable={false} id={id} x={offsetX} y={offsetY}>
       {shape === ShapeType.Rectangle && (
-        <Rect cornerRadius={8} fill={color} height={h} width={w} />
+        <Rect
+          cornerRadius={8}
+          fill={color}
+          height={h}
+          stroke={"#000"}
+          strokeWidth={2}
+          width={w}
+        />
       )}
       {shape === ShapeType.Circle && (
         <Circle
           fill={color}
           radius={(size.radius ?? 12) / factorCircle}
+          stroke={"#000"}
+          strokeWidth={2}
           x={w / 2}
           y={h / 2}
         />
