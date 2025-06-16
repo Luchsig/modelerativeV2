@@ -40,6 +40,11 @@ export const CanvasPage = () => {
   const hasInitialized = useRef(false);
 
   useEffect(() => {
+    hasInitialized.current = false;
+    useRoomStore.getState().disconnectYjsIfAlone();
+  }, [roomId]);
+
+  useEffect(() => {
     if (!hasInitialized.current && roomData && nodeImages && roomId) {
       const nodes = roomData.stateNodes ? JSON.parse(roomData.stateNodes) : [];
       const edges = roomData.stateEdges ? JSON.parse(roomData.stateEdges) : [];

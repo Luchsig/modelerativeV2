@@ -48,6 +48,8 @@ export interface RoomStore {
     roomId: Id<"rooms">,
     initialState?: { nodes?: ShapeData[]; edges?: Edge[] },
   ) => Promise<() => void>;
+
+  disconnectYjsIfAlone: () => void;
 }
 
 export const useRoomStore = create<RoomStore>((set, get) => {
@@ -66,6 +68,13 @@ export const useRoomStore = create<RoomStore>((set, get) => {
       nodes: Array.from(yNodes.values()),
       edges: Array.from(yEdges.values()),
     });
+  };
+
+  const isLastClient = () => {
+    if (!provider) return true;
+    const states = Array.from(provider.awareness.getStates().values());
+
+    return states.length <= 1;
   };
 
   // optional: batch mehrere Transaktionen kurz zusammen
@@ -195,6 +204,21 @@ export const useRoomStore = create<RoomStore>((set, get) => {
     },
     redo: () => {
       get().undoManager.redo();
+    },
+
+    disconnectYjsIfAlone: () => {
+      if (isLastClient() && provider) {
+        provider.destroy();
+        provider = null;
+
+        ydoc.transact(() => {
+          yNodes.clear();
+          yEdges.clear();
+        }, ydoc.clientID);
+
+        get().undoManager.clear();
+        set({ nodes: [], edges: [] });
+      }
     },
 
     // --- INITIAL SYNC ---
