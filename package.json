@@ -35,8 +35,10 @@
     "convex-helpers": "^0.1.76",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
+    "file-saver": "^2.0.5",
     "framer-motion": "11.15.0",
     "fs": "^0.0.1-security",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.483.0",
     "query-strings": "^0.1.0",
     "react": "19.0.0",
@@ -55,6 +57,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.7",
     "@types/node": "20.5.7",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",

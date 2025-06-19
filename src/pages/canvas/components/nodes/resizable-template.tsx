@@ -67,7 +67,7 @@ const ResizableTemplate: FC<Props> = ({
 
     return found ? found.url : imageProps.src;
   }, [imageProps?.src, roomImages]);
-  const [img] = useImage(imageUrl || "");
+  const [img] = useImage(imageUrl || "", "anonymous");
 
   // … w, h, localAnchors, textBox, imagePos wie gehabt …
   const { w, h, localAnchors, textBox, imagePos } = useMemo(() => {

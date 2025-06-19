@@ -3,7 +3,7 @@ import {useEffect, useRef} from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { Spinner } from "@heroui/react";
-import { useAuth } from "@clerk/clerk-react";
+import {useUser} from "@clerk/clerk-react";
 
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -14,10 +14,32 @@ import { Toolbar } from "@/pages/canvas/layout/toolbar";
 import { useRoomStore } from "@/store/use-room-store";
 import Canvas from "@/pages/canvas/layout/canvas";
 import { useAutoSaveRoom } from "@/hooks/use-save-room.ts";
+import Konva from "konva";
 
 export const CanvasPage = () => {
   const { roomId } = useParams<{ roomId: string }>();
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, user } = useUser();
+  const stageRef = useRef<Konva.Stage>(null);
+  const displayName = user?.fullName || user?.firstName || "Anonymous";
+
+  const handleExportImage = () => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const uri = stage.toDataURL({
+      pixelRatio: 2,
+      mimeType: "image/png",
+      quality: 1,
+    });
+
+    const link = document.createElement("a");
+    // @ts-ignore
+    link.download = `${roomData.title || "modelerative_canvas"}.png`;
+    link.href = uri;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   useAutoSaveRoom(5000);
 
@@ -35,9 +57,16 @@ export const CanvasPage = () => {
       : "skip",
   );
   const setRoomData = useRoomStore((state) => state.setRoomData);
+  const setDisplayName = useRoomStore((state) => state.setDisplayName);
   const initYjsSync = useRoomStore((state) => state.initYjsSync);
 
   const hasInitialized = useRef(false);
+
+  useEffect(() => {
+    if (displayName) {
+      setDisplayName(displayName);
+    }
+  }, [displayName, setDisplayName]);
 
   useEffect(() => {
     hasInitialized.current = false;
@@ -89,8 +118,8 @@ export const CanvasPage = () => {
     <>
       <InfoBar />
       <ComponentSelector />
-      <Toolbar />
-      <Canvas />
+      <Toolbar handleExportImage={handleExportImage} />
+      <Canvas stageRef={stageRef}/>
     </>
   );
 };

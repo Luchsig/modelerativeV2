@@ -1,10 +1,14 @@
 import { Button } from "@heroui/button";
-import { Undo, Redo } from "lucide-react";
+import { Undo, Redo, Download } from "lucide-react";
 
 // import { ThemeSwitch } from "@/components/theme-switch.tsx";
 import { useRoomStore } from "@/store/use-room-store.ts";
 
-export const Toolbar = () => {
+export const Toolbar = ({
+  handleExportImage,
+}: {
+  handleExportImage: () => void;
+}) => {
   const undo = useRoomStore((s) => s.undo);
   const redo = useRoomStore((s) => s.redo);
 
@@ -27,6 +31,14 @@ export const Toolbar = () => {
           onPress={redo}
         >
           <Redo />
+        </Button>
+        <Button
+          isIconOnly
+          className={"bg-none border-none"}
+          variant="bordered"
+          onPress={handleExportImage}
+        >
+          <Download />
         </Button>
       </div>
     </div>

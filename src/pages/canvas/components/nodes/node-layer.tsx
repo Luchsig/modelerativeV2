@@ -17,6 +17,7 @@ export interface NodeLayerProps {
   ) => void;
   onNodeClick: (nodeId: string) => void;
   onNodeDragStart?: () => void;
+  onNodeDragMove?: () => void;
   onGroupDragEnd?: (ids: string[], updated: ShapeData[]) => void;
 }
 
@@ -29,6 +30,7 @@ const NodeLayer: FC<NodeLayerProps> = ({
   onNodeClick,
   onNodeDragStart,
   onGroupDragEnd,
+  onNodeDragMove,
 }) => {
   const layerRef = useRef<Konva.Layer>(null);
   const trRef = useRef<Konva.Transformer>(null);
@@ -67,6 +69,7 @@ const NodeLayer: FC<NodeLayerProps> = ({
               onAnchorMouseDown(id, anc, abs)
             }
             onChange={onChange}
+            onDragMove={onNodeDragMove}
             onDragStart={onNodeDragStart}
             onSelect={() => onNodeClick(node.id)}
           />

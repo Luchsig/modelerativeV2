@@ -1,12 +1,6 @@
 // src/pages/layout/Canvas.tsx
 
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Stage, Layer, Rect } from "react-konva";
 import { useWindowSize } from "usehooks-ts";
 import Konva from "konva";
@@ -21,10 +15,15 @@ import ContextMenu from "@/pages/canvas/components/context-menu.tsx";
 import { MenuTarget, ShapeData } from "@/types/canvas.ts";
 import { useEdgeDrag } from "@/pages/canvas/hooks/use-edge-drag.ts";
 import { useMarqueeSelection } from "@/pages/canvas/hooks/use-marquee-selection.ts";
+import { AwarenessLayer } from "@/pages/canvas/components/awareness-layer.tsx";
 
 type SelectedTarget = { type: "node" | "edge"; id: string } | null;
 
-const Canvas: React.FC = () => {
+interface CanvasProps {
+  stageRef: React.RefObject<Konva.Stage>;
+}
+
+const Canvas: React.FC<CanvasProps> = ({ stageRef }) => {
   // ── Zustand aus Store
   const nodes = useRoomStore((s) => s.nodes);
   const edges = useRoomStore((s) => s.edges);
@@ -35,9 +34,9 @@ const Canvas: React.FC = () => {
   const removeEdge = useRoomStore((s) => s.removeEdge);
   const updateNode = useRoomStore((s) => s.updateNode);
   const removeNode = useRoomStore((s) => s.removeNode);
-
-  // ── EINZIGES stageRef für Stage UND Hook
-  const stageRef = useRef<Konva.Stage>(null);
+  const awarenessInfo = useRoomStore((s) => s.awarenessInfo);
+  const provider = useRoomStore((s) => s.provider);
+  const ownClientId = useRoomStore((s) => s.ownClientId);
 
   // ── Marquee-Selection Hook
   const {
@@ -134,6 +133,15 @@ const Canvas: React.FC = () => {
     },
     [],
   );
+
+  const handleMouseMove = useCallback(() => {
+    const stage = stageRef.current;
+    const pos = stage?.getPointerPosition();
+
+    if (pos) {
+      provider!.awareness.setLocalStateField("cursor", { x: pos.x, y: pos.y });
+    }
+  }, [provider]);
 
   // ── Context-Menu
   const handleContextMenu = useCallback(
@@ -257,10 +265,18 @@ const Canvas: React.FC = () => {
         onChange={handleChange}
         onGroupDragEnd={handleGroupDragEnd}
         onNodeClick={handleNodeClick}
+        onNodeDragMove={handleMouseMove}
         onNodeDragStart={() => setMenuVisible(false)}
       />
     ),
     [nodes, selected, startDrag, handleChange, handleNodeClick, selectedIds],
+  );
+
+  const awarenessLayer = useMemo(
+    () => (
+      <AwarenessLayer awarenessInfo={awarenessInfo} ownClientId={ownClientId} />
+    ),
+    [awarenessInfo, awarenessInfo.length, ownClientId],
   );
 
   return (
@@ -279,12 +295,26 @@ const Canvas: React.FC = () => {
           if (e.target === e.target.getStage()) marqueeHandlers.onMouseDown(e);
           handleStageMouseDown(e);
         }}
-        onMouseMove={marqueeHandlers.onMouseMove}
+        onMouseMove={() => {
+          handleMouseMove();
+          marqueeHandlers.onMouseMove();
+        }}
         onMouseUp={marqueeHandlers.onMouseUp}
       >
+        <Layer>
+          <Rect
+            fill="white"
+            height={height}
+            listening={false}
+            width={width}
+            x={0}
+            y={0}
+          />
+        </Layer>
         {gridLayer}
         {edgeLayer}
         {nodeLayer}
+        {awarenessLayer}
 
         {marquee && (
           <Layer>

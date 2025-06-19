@@ -12,12 +12,17 @@ import {
   RoomImage,
   Position,
   SchemaShape,
+  AwarenessInfo,
 } from "@/types/canvas";
 
 export interface RoomStore {
   roomData: RoomData | null;
   roomImages: RoomImage[];
   setRoomData: (room: RoomData, roomImages: RoomImage[]) => void;
+  awarenessInfo: AwarenessInfo[];
+  provider: WebsocketProvider | null;
+  ownClientId: number;
+  displayName?: string;
 
   setVersion: (version: number) => void;
 
@@ -50,6 +55,8 @@ export interface RoomStore {
   ) => Promise<() => void>;
 
   disconnectYjsIfAlone: () => void;
+
+  setDisplayName: (name: string) => void;
 }
 
 export const useRoomStore = create<RoomStore>((set, get) => {
@@ -95,11 +102,18 @@ export const useRoomStore = create<RoomStore>((set, get) => {
   return {
     roomData: null,
     roomImages: [],
+    awarenessInfo: [],
+    provider,
+    ownClientId: -1,
 
     setVersion: (version: number) => {
       set((state) => ({
         roomData: state.roomData ? { ...state.roomData, version } : null,
       }));
+    },
+
+    setDisplayName: (name: string) => {
+      set({ displayName: name });
     },
 
     setRoomData: (room, roomImages) => set({ roomData: room, roomImages }),
@@ -228,6 +242,17 @@ export const useRoomStore = create<RoomStore>((set, get) => {
         roomId,
         ydoc,
       );
+
+      provider.awareness.setLocalStateField("user", {
+        name: get().displayName || "Anonymous",
+        color: "#" + Math.random().toString(16).substr(-6),
+      });
+
+      set({
+        provider,
+        ownClientId: provider.awareness.clientID,
+      });
+
       let initialized = false;
 
       provider.on("sync", (isSynced) => {
@@ -242,13 +267,23 @@ export const useRoomStore = create<RoomStore>((set, get) => {
         }
       });
 
-      provider.on("status", ({ status }) => {
-        console.debug(`Yjs Provider status: ${status}`);
-      });
-
-      // awareness-Änderungen können Undo-Stack clearen, falls gewünscht
       provider.awareness.on("change", () => {
         undoManager.clear();
+        if (!provider) return;
+        const infos: AwarenessInfo[] = Array.from(
+          provider.awareness.getStates().entries(),
+        ).map(([clientID, state]) => ({
+          clientID: Number(clientID),
+          name: state.user?.name ?? "Anonymous",
+          color: state.user?.color ?? "#000",
+          cursor: state.cursor,
+        }));
+
+        set({ awarenessInfo: infos });
+      });
+
+      provider.on("status", ({ status }) => {
+        console.debug(`Yjs Provider status: ${status}`);
       });
 
       return () => {

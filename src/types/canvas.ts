@@ -99,3 +99,10 @@ export interface RoomImage {
   progress?: number;
   message?: string;
 }
+
+export interface AwarenessInfo {
+  clientID: number;
+  name: string;
+  color: string;
+  cursor?: { x: number; y: number };
+}
