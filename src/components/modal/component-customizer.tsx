@@ -177,7 +177,7 @@ const ComponentCustomizer = ({}) => {
       <ModalContent className="w-[75vw] max-w-[75vw] overflow-visible">
         {(onClose) => (
           <>
-            <ModalHeader>Design New Component</ModalHeader>
+            <ModalHeader>Node Type Designer</ModalHeader>
             <Form className="px-6 space-y-4" onSubmit={onSubmit}>
               <div className="flex gap-6 w-full">
                 <div className="w-[70%] space-y-4">

@@ -137,7 +137,7 @@ export const Actions = ({ children, placement, id, title }: ActionProps) => {
               onOpen(id, title);
             }}
           >
-            Edit room
+            Edit Room
           </DropdownItem>
           <DropdownItem
             key="exportRoom"

@@ -1,0 +1,154 @@
+{
+  "shapes": [
+    {
+      "id": 1,
+      "shape": "rectangle",
+      "imageProps": {
+        "src": "Event.svg",
+        "width": 40,
+        "height": 40,
+        "imagePosition": "TR"
+      },
+      "size": { "width": 150, "height": 100 },
+      "color": "#babd65",
+      "typeName": "Business Event",
+      "typeDescription": "A business behavior element that denotes an organizational state change. It may originate from and be resolved inside or outside the organization.",
+      "isTextEnabled": true,
+      "connectableTypes": [1, 2]
+    },
+    {
+      "id": 2,
+      "shape": "rectangle",
+      "imageProps": {
+        "src": "Process.svg",
+        "width": 40,
+        "height": 40,
+        "imagePosition": "TR"
+      },
+      "size": {
+        "width": 150,
+        "height": 100
+      },
+      "color": "#babd65",
+      "typeName": "Business Process",
+      "typeDescription": "A sequence of business behaviors that achieves a specific outcome such as a defined set of products or business services.",
+      "isTextEnabled": true,
+      "connectableTypes": [1, 2]
+    },
+    {
+      "id": 3,
+      "shape": "rectangle",
+      "imageProps": {
+        "src": "Interaction.svg",
+        "width": 40,
+        "height": 40,
+        "imagePosition": "TR"
+      },
+      "size": {
+        "width": 150,
+        "height": 100
+      },
+      "color": "#babd65",
+      "typeName": "Business Interaction",
+      "typeDescription": "A unit of collective business behavior performed by (a collaboration of) two or more business roles.",
+      "isTextEnabled": true,
+      "connectableTypes": [1, 2]
+    },
+    {
+      "id": 4,
+      "shape": "circle",
+      "size": {
+        "radius": 40
+      },
+      "color": "#FFFFFF",
+      "typeName": "Fork Node",
+      "typeDescription": "Use to split a flow into multiple parallel flows.",
+      "isTextEnabled": false,
+      "connectableTypes": [1, 2]
+    },
+    {
+      "id": 5,
+      "shape": "circle",
+      "size": {
+        "radius": 40
+      },
+      "color": "#000000",
+      "typeName": "Join Node",
+      "typeDescription": "Use to join multiple parallel flows into a single flow.",
+      "isTextEnabled": false,
+      "connectableTypes": [1, 2]
+    },
+    {
+      "id": 6,
+      "shape": "rectangle",
+      "imageProps": {
+        "src": "Actor.svg",
+        "width": 40,
+        "height": 40,
+        "imagePosition": "TR"
+      },
+      "size": {
+        "width": 150,
+        "height": 100
+      },
+      "color": "#babd65",
+      "typeName": "Business Actor",
+      "typeDescription": "A business entity that is capable of performing behavior.",
+      "isTextEnabled": true,
+      "connectableTypes": [1, 2]
+    },
+    {
+      "id": 7,
+      "shape": "rectangle",
+      "imageProps": {
+        "src": "Service.svg",
+        "width": 40,
+        "height": 40,
+        "imagePosition": "TR"
+      },
+      "size": {
+        "width": 150,
+        "height": 100
+      },
+      "color": "#babd65",
+      "typeName": "Business Service",
+      "typeDescription": "An explicitly defined exposed business behavior.",
+      "isTextEnabled": true,
+      "connectableTypes": [1, 2]
+    },
+    {
+      "id": 8,
+      "shape": "rectangle",
+      "imageProps": {
+        "src": "Function.svg",
+        "width": 40,
+        "height": 40,
+        "imagePosition": "TR"
+      },
+      "size": {
+        "width": 150,
+        "height": 100
+      },
+      "color": "#babd65",
+      "typeName": "Business Function",
+      "typeDescription": "A collection of business behavior based on a chosen set of criteria (typically required business resources and/or competences).",
+      "isTextEnabled": true,
+      "connectableTypes": [1, 2]
+    },
+    {
+      "id": 9,
+      "shape": "custom",
+      "imageProps": {
+        "src": "Application_Component.svg"
+      },
+      "size": {
+        "width": 150,
+        "height": 100
+      },
+      "typeName": "Application Component",
+      "typeDescription": "An encapsulation of application functionality aligned to implementation structure, which is modular and replaceable. It encapsulates its behavior and data, exposes services, and makes them available through interfaces.",
+      "isTextEnabled": true,
+      "connectableTypes": [1, 2]
+    }
+  ]
+}
