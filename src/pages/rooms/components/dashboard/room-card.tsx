@@ -116,7 +116,11 @@ export const RoomCard = ({
               disabled && "cursor-not-allowed opacity-75",
             )}
             disabled={onPendingFavorite || onPendingUnfavorite}
-            onPress={() => toggleFavorite()}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleFavorite();
+            }}
           >
           <Star className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
           </Button>
