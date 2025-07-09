@@ -268,7 +268,6 @@ export const useRoomStore = create<RoomStore>((set, get) => {
       });
 
       provider.awareness.on("change", () => {
-        undoManager.clear();
         if (!provider) return;
         const infos: AwarenessInfo[] = Array.from(
           provider.awareness.getStates().entries(),

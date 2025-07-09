@@ -138,8 +138,11 @@ const Canvas: React.FC<CanvasProps> = ({ stageRef }) => {
     const stage = stageRef.current;
     const pos = stage?.getPointerPosition();
 
-    if (pos) {
-      provider!.awareness.setLocalStateField("cursor", { x: pos.x, y: pos.y });
+    if (!pos) return;
+
+    const awareness = provider?.awareness;
+    if (awareness) {
+      awareness.setLocalStateField("cursor", { x: pos.x, y: pos.y });
     }
   }, [provider]);
 
